@@ -1,0 +1,66 @@
+name: "New Ingest Asset"
+description: "Request a new Dagster ingest asset (REST, GraphQL, or DB replication)."
+labels: ["ingest", "good first issue", "copilot"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **EU AI Act notice**: contributions generated with AI assistance must include the
+        Art. 52 header and tick the disclosure checkbox in the PR. See
+        [compliance/AI_TRANSPARENCY_NOTICE.md](../../compliance/AI_TRANSPARENCY_NOTICE.md).
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Source type
+      options:
+        - REST
+        - GraphQL
+        - DB
+    validations:
+      required: true
+
+  - type: input
+    id: provider
+    attributes:
+      label: Provider / engine
+      placeholder: "e.g. jsonplaceholder | countries | postgres"
+    validations:
+      required: true
+
+  - type: input
+    id: entity
+    attributes:
+      label: Entity / table
+      placeholder: "e.g. posts | countries | orders"
+    validations:
+      required: true
+
+  - type: textarea
+    id: access
+    attributes:
+      label: Access details
+      description: Auth requirements or confirm no-auth
+      placeholder: "e.g. no auth / bearer token / URI + since watermark"
+
+  - type: textarea
+    id: spec
+    attributes:
+      label: Spec (endpoint / query / SQL)
+      description: REST URL + params; GraphQL query body; or SQL + watermark column
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Expected output shape
+      description: Fields, file format (JSON / Parquet), partition strategy
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Author checklist
+      options:
+        - label: Follows path + naming rules in `.github/copilot-instructions.md`
+        - label: Uses correct `@asset` group decorator
+        - label: Writes file, returns path, adds `rows` + `path` metadata
+        - label: If AI-assisted — Art. 52 header present in generated file(s)

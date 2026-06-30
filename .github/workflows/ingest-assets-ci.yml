@@ -1,0 +1,40 @@
+name: ingest-assets-ci
+
+on:
+  pull_request:
+    paths:
+      - "warehouse/oso_dagster/assets/ingest/**"
+      - ".github/copilot-instructions.md"
+      - "src/**"
+      - "pyproject.toml"
+
+jobs:
+  sandbox:
+    name: Verify sandbox assets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package + dagster extras
+        run: uv pip install -e ".[dagster]" --system
+
+      - name: List sandbox assets
+        run: dagster asset list -m warehouse.oso_dagster.assets.ingest.defs_sandbox
+
+      - name: Materialize REST demo
+        run: dagster asset materialize --select fetch_jsonplaceholder_posts -m warehouse.oso_dagster.assets.ingest.defs_sandbox
+
+      - name: Materialize GraphQL demo
+        run: dagster asset materialize --select fetch_countries_countries -m warehouse.oso_dagster.assets.ingest.defs_sandbox
+
+      - name: Upload tmp outputs as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sandbox-outputs
+          path: warehouse/oso_dagster/tmp/
+          retention-days: 7
