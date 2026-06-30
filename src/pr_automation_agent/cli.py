@@ -115,7 +115,7 @@ def cli():
 
 @cli.command()
 @click.argument("asset_type", metavar="TYPE", type=click.Choice(["rest", "graphql", "db"]))
-@click.option("--provider", required=True, help="Provider name, e.g. stripe, github, hubspot")
+@click.option("--provider", default=None, help="Provider name, e.g. stripe, github, hubspot (rest/graphql)")
 @click.option("--entity", help="Entity/resource name, e.g. invoices, issues (rest/graphql)")
 @click.option("--engine", help="DB engine name, e.g. postgres, mysql (db type only)")
 @click.option("--table", help="Table name (db type only)")
@@ -131,16 +131,18 @@ def scaffold(asset_type, provider, entity, engine, table, output_dir, dry_run):
 
     \b
     Examples:
-      pr-agent scaffold rest   --provider stripe   --entity invoices
+      pr-agent scaffold rest    --provider stripe  --entity invoices
       pr-agent scaffold graphql --provider github  --entity issues
-      pr-agent scaffold db     --provider mydb     --engine postgres --table orders
+      pr-agent scaffold db      --engine postgres  --table orders
     """
-    provider = _safe_id(provider)
     today = dt.date.today().isoformat()
 
     if asset_type in ("rest", "graphql"):
+        if not provider:
+            raise click.UsageError("--provider is required for rest and graphql types.")
         if not entity:
             raise click.UsageError("--entity is required for rest and graphql types.")
+        provider = _safe_id(provider)
         entity = _safe_id(entity)
 
         if asset_type == "rest":
@@ -175,19 +177,18 @@ def scaffold(asset_type, provider, entity, engine, table, output_dir, dry_run):
         )
         rel_path = pathlib.Path("db") / engine / f"{table}_replication_asset.py"
 
+    output_root = pathlib.Path(output_dir).resolve()
+
     if dry_run:
-        click.echo(f"# Would write to: {pathlib.Path(output_dir) / rel_path}\n")
+        click.echo(f"# Would write to: {output_root / rel_path}\n")
         click.echo(code)
         return
 
-    output_root = pathlib.Path(output_dir).resolve()
     dest = output_root / rel_path
     dest.parent.mkdir(parents=True, exist_ok=True)
 
-    # Create __init__.py only inside output_root, not in output_root itself
-    for parent in dest.parents:
-        if parent == output_root:
-            break
+    # Create __init__.py in output_root and every subdirectory up to dest
+    for parent in reversed([output_root] + [p for p in dest.parents if output_root in p.parents]):
         init = parent / "__init__.py"
         if not init.exists():
             init.touch()
@@ -199,6 +200,15 @@ def scaffold(asset_type, provider, entity, engine, table, output_dir, dry_run):
 
     dest.write_text(code, encoding="utf-8")
     click.echo(f"Created: {dest}")
-    click.echo(f"\nNext: register in your defs.py:")
-    click.echo(f"  import {'.'.join(rel_path.with_suffix('').parts)} as new_mod")
+
+    # Show import path relative to CWD so the hint is copy-pasteable
+    cwd = pathlib.Path.cwd().resolve()
+    try:
+        import_base = dest.with_suffix("").relative_to(cwd)
+        import_str = ".".join(import_base.parts)
+    except ValueError:
+        import_str = ".".join(rel_path.with_suffix("").parts)
+
+    click.echo("\nNext: register in your defs.py:")
+    click.echo(f"  import {import_str} as new_mod")
     click.echo("  assets = load_assets_from_modules([..., new_mod])")

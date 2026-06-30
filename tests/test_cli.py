@@ -39,7 +39,7 @@ def test_scaffold_graphql_creates_file(runner, tmp_path):
 def test_scaffold_db_creates_file(runner, tmp_path):
     result = runner.invoke(
         cli,
-        ["scaffold", "db", "--provider", "mydb", "--engine", "postgres", "--table", "orders", "--output-dir", str(tmp_path)],
+        ["scaffold", "db", "--engine", "postgres", "--table", "orders", "--output-dir", str(tmp_path)],
     )
     assert result.exit_code == 0, result.output
     dest = tmp_path / "db" / "postgres" / "orders_replication_asset.py"
@@ -67,6 +67,23 @@ def test_scaffold_rest_missing_entity_errors(runner, tmp_path):
     )
     assert result.exit_code != 0
     assert "--entity" in result.output
+
+
+def test_scaffold_rest_missing_provider_errors(runner, tmp_path):
+    result = runner.invoke(
+        cli,
+        ["scaffold", "rest", "--entity", "invoices", "--output-dir", str(tmp_path)],
+    )
+    assert result.exit_code != 0
+    assert "--provider" in result.output
+
+
+def test_scaffold_output_dir_gets_init_py(runner, tmp_path):
+    runner.invoke(
+        cli,
+        ["scaffold", "rest", "--provider", "acme", "--entity", "orders", "--output-dir", str(tmp_path)],
+    )
+    assert (tmp_path / "__init__.py").exists()
 
 
 def test_scaffold_db_missing_engine_errors(runner, tmp_path):
