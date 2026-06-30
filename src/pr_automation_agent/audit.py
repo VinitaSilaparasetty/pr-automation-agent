@@ -24,7 +24,7 @@ def log_ai_contribution(
     """
     _LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     record = {
-        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
         "file": file_path,
         "ai_model": ai_model,
         "human_reviewer": human_reviewer,

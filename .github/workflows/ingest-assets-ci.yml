@@ -1,16 +1,38 @@
 name: ingest-assets-ci
 
 on:
+  push:
+    branches: [main]
   pull_request:
     paths:
-      - "warehouse/oso_dagster/assets/ingest/**"
-      - ".github/copilot-instructions.md"
+      - "examples/**"
       - "src/**"
+      - "tests/**"
       - "pyproject.toml"
+      - ".github/copilot-instructions.md"
 
 jobs:
-  sandbox:
-    name: Verify sandbox assets
+  tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dev dependencies
+        run: uv pip install -e ".[dev]" --system
+
+      - name: Run tests
+        run: pytest tests/ -v
+
+  dagster-integration:
+    name: Dagster asset integration
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,25 +44,47 @@ jobs:
       - name: Install package + dagster extras
         run: uv pip install -e ".[dagster]" --system
 
-      - name: List sandbox assets
-        run: dagster asset list -m warehouse.oso_dagster.assets.ingest.defs_sandbox
+      - name: List all assets
+        run: dagster asset list -m examples.defs
         env:
           PYTHONWARNINGS: "ignore::UserWarning"
 
-      - name: Materialize REST demo
-        run: dagster asset materialize --select fetch_jsonplaceholder_posts -m warehouse.oso_dagster.assets.ingest.defs_sandbox
+      - name: Materialize REST example
+        run: dagster asset materialize --select fetch_jsonplaceholder_posts -m examples.defs
         env:
           PYTHONWARNINGS: "ignore::UserWarning"
 
-      - name: Materialize GraphQL demo
-        run: dagster asset materialize --select fetch_countries_countries -m warehouse.oso_dagster.assets.ingest.defs_sandbox
+      - name: Materialize GraphQL example
+        run: dagster asset materialize --select fetch_countries_countries -m examples.defs
         env:
           PYTHONWARNINGS: "ignore::UserWarning"
 
-      - name: Upload tmp outputs as artifact
+      - name: Upload example outputs as artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: sandbox-outputs
-          path: warehouse/oso_dagster/tmp/
+          name: example-outputs-${{ github.run_id }}
+          path: tmp/
           retention-days: 7
+
+  scaffold-cli:
+    name: pr-agent CLI smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: uv pip install -e . --system
+
+      - name: Scaffold a REST asset (dry-run)
+        run: pr-agent scaffold rest --provider acme --entity invoices --dry-run
+
+      - name: Scaffold a GraphQL asset (dry-run)
+        run: pr-agent scaffold graphql --provider acme --entity products --dry-run
+
+      - name: Scaffold a DB asset (dry-run)
+        run: pr-agent scaffold db --engine postgres --table orders --dry-run

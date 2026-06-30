@@ -1,81 +1,150 @@
 # pr-automation-agent
 
-A scaffold and shared library for automating Dagster ingest PRs with GitHub Copilot,
-built with **EU AI Act compliance** from day one (Art. 50, 52, 53 — June 2026).
+A production-ready scaffold and shared library for automating Dagster ingest PRs
+with GitHub Copilot. Built with **EU AI Act compliance** (Art. 50, 52, 53) from
+day one, as of the June 2026 version of the Act.
 
-## What this repo provides
+## What you get
 
 | Component | Description |
 |-----------|-------------|
-| `warehouse/` scaffold | Three runnable demo assets (REST, GraphQL, DB) that encode the exact file layout, naming, decorator, and output conventions Copilot needs |
-| `src/pr_automation_agent/` | pip-installable package with `DevEnvSecretResolver` and `log_ai_contribution()` |
-| `.github/copilot-instructions.md` | Agent authoring rules including mandatory EU AI Act Art. 52 file headers |
-| `.github/PULL_REQUEST_TEMPLATE.md` | Per-PR AI disclosure form (Art. 50) |
-| `.github/workflows/eu-ai-act-compliance.yml` | CI that enforces disclosure and Art. 52 headers |
-| `compliance/` | System-level transparency notice and human oversight policy |
+| `pr-agent scaffold` CLI | Generate a correctly structured asset file in seconds |
+| Base asset classes | `BaseRestAsset`, `BaseGraphQLAsset`, `PaginatedGraphQLAsset`, `BaseDbReplicationAsset` — implement one method, get file I/O and Dagster metadata for free |
+| `DevEnvSecretResolver` + `AbstractSecretResolver` | Env-var resolver for dev/CI; swap for AWS SSM, GCP Secret Manager, etc. in production |
+| `dev_env_secret_resolver_resource` | Drop-in Dagster resource — register in your `Definitions` |
+| `log_ai_contribution()` | Append EU AI Act audit records after AI-generated PRs are merged |
+| `.github/` workflows | CI that runs unit tests, materializes examples, and enforces EU AI Act disclosure |
+| `compliance/` | AI transparency notice (Art. 52/53) and human oversight policy (Art. 14) |
 
-## Quick start
+---
 
-### 1. Use as a GitHub template
-
-Click **"Use this template"** on GitHub, then adapt `warehouse/` paths and
-`copilot-instructions.md` to your monorepo. See [CONNECTING.md](CONNECTING.md).
-
-### 2. Install the package
+## Install
 
 ```bash
-pip install pr-automation-agent          # utilities only
-pip install "pr-automation-agent[dagster]"  # + dagster, requests, pandas, pyarrow, sqlalchemy
+pip install "pr-automation-agent[dagster]"
+# or
+uv add "pr-automation-agent[dagster]"
 ```
 
-### 3. Run the sandbox demos locally
+---
+
+## Quickstart: scaffold your first asset
 
 ```bash
-pip install -e ".[dagster]"
+# REST ingest
+pr-agent scaffold rest --provider stripe --entity invoices
 
-# List assets
-dagster asset list -m warehouse.oso_dagster.assets.ingest.defs_sandbox
+# GraphQL ingest
+pr-agent scaffold graphql --provider github --entity issues
 
-# Materialize public demos (no secrets needed)
-dagster asset materialize \
-  --select fetch_jsonplaceholder_posts \
-  -m warehouse.oso_dagster.assets.ingest.defs_sandbox
+# DB replication
+pr-agent scaffold db --engine postgres --table orders
+```
 
-dagster asset materialize \
-  --select fetch_countries_countries \
-  -m warehouse.oso_dagster.assets.ingest.defs_sandbox
+Each command writes a ready-to-use asset file with the correct name, decorator,
+base class, output path, and EU AI Act header. Fill in the TODOs and register it.
 
-# DB demo (needs env vars)
+### Preview (dry-run)
+
+```bash
+pr-agent scaffold rest --provider stripe --entity invoices --dry-run
+```
+
+---
+
+## Wire up Definitions
+
+```python
+# defs.py
+from dagster import Definitions, load_assets_from_modules
+from pr_automation_agent import dev_env_secret_resolver_resource
+
+import myrepo.ingest.rest.stripe.invoices_asset as stripe_invoices
+
+defs = Definitions(
+    assets=load_assets_from_modules([stripe_invoices]),
+    resources={"secret_resolver": dev_env_secret_resolver_resource},
+)
+```
+
+---
+
+## Base classes in 5 lines
+
+```python
+from pr_automation_agent import BaseRestAsset
+
+class StripeInvoices(BaseRestAsset):
+    provider = "stripe"
+    entity = "invoices"
+
+    def fetch_all(self) -> list[dict]:
+        import requests
+        r = requests.get(
+            "https://api.stripe.com/v1/invoices",
+            headers={"Authorization": f"Bearer {self._token()}"},
+            timeout=60,
+        )
+        r.raise_for_status()
+        return r.json()["data"]
+```
+
+Then:
+
+```python
+@asset(group_name="rest_crawl")
+def fetch_stripe_invoices(context: AssetExecutionContext) -> str:
+    return StripeInvoices().materialize(context)
+```
+
+---
+
+## Run the examples
+
+```bash
+# List all example assets
+dagster asset list -m examples.defs
+
+# Materialize (no auth needed)
+dagster asset materialize --select fetch_jsonplaceholder_posts -m examples.defs
+dagster asset materialize --select fetch_countries_countries -m examples.defs
+
+# DB example (requires env vars)
 export DAGSTER__POSTGRES__URI="sqlite:///demo.db"
 export DAGSTER__POSTGRES__SINCE="1970-01-01"
-dagster asset materialize \
-  --select replicate_postgres_orders \
-  -m warehouse.oso_dagster.assets.ingest.defs_sandbox
+dagster asset materialize --select replicate_postgres_orders -m examples.defs
 ```
 
-## Adding a new data source
+---
 
-1. Open a "New Ingest Asset" issue — the template gathers exactly what Copilot needs.
-2. Copilot generates the asset following `.github/copilot-instructions.md`.
-3. Open a PR; the EU AI Act compliance CI checks disclosure and Art. 52 headers.
-4. A human reviewer verifies the output and approves.
+## Run tests
+
+```bash
+pip install -e ".[dev]"
+pytest tests/ -v
+```
+
+---
 
 ## EU AI Act compliance summary
 
-Risk classification: **Limited Risk** (not Annex III).
+Risk classification: **Limited Risk** (not Annex III high-risk).
 
-| Article | What | How |
-|---------|------|-----|
+| Article | Obligation | Implementation |
+|---------|-----------|----------------|
 | Art. 50 | Disclose AI interaction | PR template checkbox + `ai-generated` label |
-| Art. 52 | Label AI-generated content | Header comment in every Copilot-generated file |
+| Art. 52 | Label AI-generated content | Art. 52 header in every generated file |
 | Art. 53/56 | GPAI deployer transparency | `compliance/AI_TRANSPARENCY_NOTICE.md` |
-| Art. 14 (practice) | Human oversight | `compliance/HUMAN_OVERSIGHT_POLICY.md` + required PR approval |
+| Art. 14 (practice) | Human oversight | `compliance/HUMAN_OVERSIGHT_POLICY.md` + required review |
 
 See [`compliance/`](compliance/) for full documentation.
 
+---
+
 ## Connecting other repos
 
-See [CONNECTING.md](CONNECTING.md) for the template-copy and pip-install integration paths.
+See [CONNECTING.md](CONNECTING.md) — GitHub template path and pip-install path,
+including how to plug in production secret backends.
 
 ## License
 

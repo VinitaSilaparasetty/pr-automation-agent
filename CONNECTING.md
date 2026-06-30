@@ -4,74 +4,125 @@ Two integration paths — use either or both.
 
 ---
 
-## Path A: GitHub Template Repo (scaffold copy)
+## Path A: GitHub Template Repo
 
-Use this if you want the full folder structure, CI workflows, and compliance files
-dropped into a new repository.
+Use this if you want the `.github/` workflows, compliance files, and
+`examples/` dropped into a new repository with one click.
 
 1. On GitHub, click **"Use this template"** → **"Create a new repository"**.
-2. Adapt `warehouse/oso_dagster/` paths to match your monorepo layout.
-3. Update `.github/copilot-instructions.md` with your provider/entity naming.
-4. Enable branch protection rules listed in `compliance/HUMAN_OVERSIGHT_POLICY.md`.
-5. Set your repo as a **template** (Settings → ✓ Template repository) so your
-   downstream contributors can do the same.
+2. Copy the `examples/` assets you need into your own ingest directory.
+3. Point your `Definitions` at your asset modules (see `examples/defs.py`).
+4. Update `.github/copilot-instructions.md` with your provider/entity names.
+5. Enable branch protection rules listed in `compliance/HUMAN_OVERSIGHT_POLICY.md`.
 
 ---
 
-## Path B: pip install (shared utilities only)
+## Path B: pip install
 
-Use this if you already have a Dagster repo and only want the `DevEnvSecretResolver`
-and audit logging utilities.
+Use this to add the base classes, scaffolder CLI, and secret resolver
+utilities to an existing Dagster repo.
 
 ```bash
-pip install pr-automation-agent
+pip install "pr-automation-agent[dagster]"
 # or with uv:
-uv add pr-automation-agent
+uv add "pr-automation-agent[dagster]"
 ```
 
-Then in your `defs_sandbox.py`:
+### Scaffold your first asset
+
+```bash
+# REST
+pr-agent scaffold rest --provider stripe --entity invoices
+
+# GraphQL
+pr-agent scaffold graphql --provider github --entity issues
+
+# DB replication
+pr-agent scaffold db --engine postgres --table orders
+```
+
+Each command creates a correctly structured asset file with the EU AI Act
+Art. 52 header, the right base class wired up, and TODOs for only the
+parts that are specific to your source.
+
+### Wire up Definitions
 
 ```python
-from dagster import Definitions, load_assets_from_modules, resource
-from pr_automation_agent import DevEnvSecretResolver, log_ai_contribution
+# your_repo/defs.py
+from dagster import Definitions, load_assets_from_modules
+from pr_automation_agent import dev_env_secret_resolver_resource
 
-@resource
-def secret_resolver():
-    return DevEnvSecretResolver()
+import your_repo.ingest.rest.stripe.invoices_asset as stripe_invoices
+# ... other asset modules ...
 
-# ... your asset modules ...
-defs = Definitions(assets=assets, resources={"secret_resolver": secret_resolver})
+defs = Definitions(
+    assets=load_assets_from_modules([stripe_invoices, ...]),
+    resources={"secret_resolver": dev_env_secret_resolver_resource},
+)
 ```
 
-And to record a merged AI contribution:
+### Switch to a production secret backend
+
+`DevEnvSecretResolver` reads env vars. For production, implement
+`AbstractSecretResolver` against your secret store:
+
+```python
+from pr_automation_agent import AbstractSecretResolver, SecretReference
+
+class AwsSsmSecretResolver(AbstractSecretResolver):
+    def resolve_as_str(self, ref: SecretReference) -> str:
+        import boto3
+        client = boto3.client("ssm")
+        param = client.get_parameter(
+            Name=f"/dagster/{ref.group_name}/{ref.key}",
+            WithDecryption=True,
+        )
+        return param["Parameter"]["Value"]
+```
+
+Register it the same way:
+
+```python
+from dagster import resource
+
+@resource
+def aws_ssm_resolver():
+    return AwsSsmSecretResolver()
+
+defs = Definitions(assets=assets, resources={"secret_resolver": aws_ssm_resolver})
+```
+
+### Record AI contributions (EU AI Act audit trail)
+
+After a Copilot-generated PR is merged:
 
 ```python
 from pr_automation_agent import log_ai_contribution
 
 log_ai_contribution(
-    file_path="warehouse/.../my_asset.py",
+    file_path="ingest/rest/stripe/invoices_asset.py",
     ai_model="GitHub Copilot",
     human_reviewer="@yourhandle",
-    pr_number="42",
+    pr_number="123",
 )
 ```
 
 ---
 
-## Minimum viable EU AI Act setup for your fork
+## Minimum EU AI Act setup for your fork
 
 Copy these three files at minimum:
 
-| File | Purpose |
-|------|---------|
-| `.github/PULL_REQUEST_TEMPLATE.md` | Art. 50 disclosure on every PR |
-| `.github/workflows/eu-ai-act-compliance.yml` | Enforces disclosure + Art. 52 headers |
-| `compliance/AI_TRANSPARENCY_NOTICE.md` | System-level disclosure for your repo |
+| File | EU AI Act obligation |
+|------|---------------------|
+| `.github/PULL_REQUEST_TEMPLATE.md` | Art. 50 — per-PR AI disclosure |
+| `.github/workflows/eu-ai-act-compliance.yml` | Art. 50/52 — CI enforcement |
+| `compliance/AI_TRANSPARENCY_NOTICE.md` | Art. 52/53 — system-level disclosure |
 
-Then update `AI_TRANSPARENCY_NOTICE.md` with your organisation's name and contact.
+Update `AI_TRANSPARENCY_NOTICE.md` with your organisation name and contact.
 
 ---
 
 ## Questions / issues
 
-Open a GitHub issue tagged `integration` in this repository.
+Open a GitHub issue tagged `integration`.

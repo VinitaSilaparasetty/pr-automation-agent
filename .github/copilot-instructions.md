@@ -13,13 +13,28 @@ Do **not** claim to be a human author anywhere in the code or PR description.
 
 ---
 
+## Quickest path: use the scaffolder
+
+If the maintainer has the package installed, generate the file with:
+
+```bash
+pr-agent scaffold rest   --provider <name> --entity <name>
+pr-agent scaffold graphql --provider <name> --entity <name>
+pr-agent scaffold db     --engine <name>  --table <name>
+```
+
+Then fill in the TODOs. The scaffolder creates the correct file path,
+names the function correctly, and inserts the Art. 52 header automatically.
+
+---
+
 ## Where files live
 
 | Pattern | Path |
 |---------|------|
-| REST asset | `warehouse/oso_dagster/assets/ingest/rest/<provider>/<entity>_asset.py` |
-| GraphQL asset | `warehouse/oso_dagster/assets/ingest/graphql/<provider>/<entity>_asset.py` |
-| DB replication | `warehouse/oso_dagster/assets/ingest/db/<engine>/<table>_replication_asset.py` |
+| REST asset | `<ingest_root>/rest/<provider>/<entity>_asset.py` |
+| GraphQL asset | `<ingest_root>/graphql/<provider>/<entity>_asset.py` |
+| DB replication | `<ingest_root>/db/<engine>/<table>_replication_asset.py` |
 
 Create an `__init__.py` in every new directory.
 
@@ -31,63 +46,67 @@ Create an `__init__.py` in every new directory.
 | GraphQL | `fetch_<provider>_<entity>` |
 | DB | `replicate_<engine>_<table>` |
 
+## Use the base classes (required)
+
+Always subclass from `pr_automation_agent`:
+
+```python
+from pr_automation_agent import BaseRestAsset, BaseGraphQLAsset, BaseDbReplicationAsset
+```
+
+Implement only the abstract method (`fetch_all`, `extract_records`, or `get_query`).
+The base class handles file I/O, output path, and Dagster metadata — don't re-implement these.
+
 ## Decorators
 
 ```python
 # REST
 @asset(group_name="rest_crawl")
+def fetch_<provider>_<entity>(context: AssetExecutionContext) -> str:
+    return _MyClass().materialize(context)
 
 # GraphQL
 @asset(group_name="graphql_crawl")
+def fetch_<provider>_<entity>(context: AssetExecutionContext) -> str:
+    return _MyClass().materialize(context)
 
 # DB — must declare secret_resolver resource
 @asset(group_name="db_replication", required_resource_keys={"secret_resolver"})
+def replicate_<engine>_<table>(context: AssetExecutionContext) -> str:
+    return _MyClass().materialize(context)
 ```
-
-## Output contract
-
-- Write to `warehouse/oso_dagster/tmp/<provider>/<entity>/YYYY-MM-DD.(json|parquet)`
-- Return the file path as a `str`
-- Always attach metadata:
-  ```python
-  context.add_output_metadata({
-      "rows": MetadataValue.int(len(items)),
-      "path": MetadataValue.path(str(fp)),
-  })
-  ```
 
 ## Secrets
 
-Use `DevEnvSecretResolver` from the `pr_automation_agent` package (already installed):
+Never hardcode credentials. Use the `secret_resolver` resource:
 
 ```python
-from pr_automation_agent import DevEnvSecretResolver
+from pr_automation_agent import SecretReference
+uri = context.resources.secret_resolver.resolve_as_str(
+    SecretReference(group_name="MYDB", key="URI")
+)
 ```
 
-For DB assets, read secrets via the `secret_resolver` resource:
-
-```python
-uri = context.resources.secret_resolver.resolve_as_str(ref)
-```
-
-The resolver reads `DAGSTER__<GROUP>__<KEY>` env vars in dev/CI.
+In dev/CI, set `DAGSTER__MYDB__URI=<value>` in the environment.
+In production, replace `DevEnvSecretResolver` with your secret backend.
 
 ## Registration
 
-Add your new module to `warehouse/oso_dagster/assets/ingest/defs_sandbox.py`:
+Add your module to your `defs.py` (or equivalent):
 
 ```python
-import warehouse.oso_dagster.assets.ingest.<type>.<provider>.<entity>_asset as new_mod
+import <your_ingest_root>.<type>.<provider>.<entity>_asset as new_mod
 assets = load_assets_from_modules([..., new_mod])
 ```
 
 ## PR description
 
-Your PR description **must** include the AI disclosure section from `PULL_REQUEST_TEMPLATE.md`. Tick the `[x] Yes` box and name the model used.
+Your PR description **must** include the disclosure section from `PULL_REQUEST_TEMPLATE.md`.
+Tick the `[x] Yes` box and name the model used.
 
-## Public, auth-free examples
+## Reference implementations
 
-Reference these when building new assets:
-- REST: `fetch_jsonplaceholder_posts`
-- GraphQL: `fetch_countries_countries`
-- DB (with secrets): `replicate_postgres_orders` (needs `DAGSTER__POSTGRES__URI` + `DAGSTER__POSTGRES__SINCE`)
+See `examples/` for complete, working reference implementations:
+- REST: `examples/rest/jsonplaceholder/posts_asset.py`
+- GraphQL: `examples/graphql/countries/countries_asset.py`
+- DB: `examples/db/postgres/orders_replication_asset.py`
