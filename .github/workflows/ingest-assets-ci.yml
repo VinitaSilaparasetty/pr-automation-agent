@@ -24,12 +24,18 @@ jobs:
 
       - name: List sandbox assets
         run: dagster asset list -m warehouse.oso_dagster.assets.ingest.defs_sandbox
+        env:
+          PYTHONWARNINGS: "ignore::UserWarning"
 
       - name: Materialize REST demo
         run: dagster asset materialize --select fetch_jsonplaceholder_posts -m warehouse.oso_dagster.assets.ingest.defs_sandbox
+        env:
+          PYTHONWARNINGS: "ignore::UserWarning"
 
       - name: Materialize GraphQL demo
         run: dagster asset materialize --select fetch_countries_countries -m warehouse.oso_dagster.assets.ingest.defs_sandbox
+        env:
+          PYTHONWARNINGS: "ignore::UserWarning"
 
       - name: Upload tmp outputs as artifact
         if: always()
