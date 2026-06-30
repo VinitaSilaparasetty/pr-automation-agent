@@ -45,17 +45,17 @@ jobs:
         run: uv pip install -e ".[dagster]" --system
 
       - name: List all assets
-        run: dagster asset list -m examples.defs
+        run: dagster asset list -m examples.dagster.defs
         env:
           PYTHONWARNINGS: "ignore::UserWarning"
 
       - name: Materialize REST example
-        run: dagster asset materialize --select fetch_jsonplaceholder_posts -m examples.defs
+        run: dagster asset materialize --select fetch_jsonplaceholder_posts -m examples.dagster.defs
         env:
           PYTHONWARNINGS: "ignore::UserWarning"
 
       - name: Materialize GraphQL example
-        run: dagster asset materialize --select fetch_countries_countries -m examples.defs
+        run: dagster asset materialize --select fetch_countries_countries -m examples.dagster.defs
         env:
           PYTHONWARNINGS: "ignore::UserWarning"
 

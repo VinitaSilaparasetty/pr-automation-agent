@@ -10,28 +10,31 @@ Use this if you want the `.github/` workflows, compliance files, and
 `examples/` dropped into a new repository with one click.
 
 1. On GitHub, click **"Use this template"** → **"Create a new repository"**.
-2. Copy the `examples/` assets you need into your own ingest directory.
-3. Point your `Definitions` at your asset modules (see `examples/defs.py`).
-4. Update `.github/copilot-instructions.md` with your provider/entity names.
-5. Enable branch protection rules listed in `compliance/HUMAN_OVERSIGHT_POLICY.md`.
+2. Copy the `examples/plain/` assets you need into your own ingest directory.
+3. Call `.run()` from whatever pipeline or script you use.
+4. If you use Dagster, wire up `examples/dagster/defs.py` as a starting point.
+5. Update `.github/copilot-instructions.md` with your provider/entity names.
+6. Enable branch protection rules listed in `compliance/HUMAN_OVERSIGHT_POLICY.md`.
 
 ---
 
 ## Path B: pip install
 
 Use this to add the base classes, scaffolder CLI, and secret resolver
-utilities to an existing Dagster repo.
+utilities to an existing project.
 
 ```bash
+# Plain Python / any framework
+pip install pr-automation-agent
+
+# With Dagster integration
 pip install "pr-automation-agent[dagster]"
-# or with uv:
-uv add "pr-automation-agent[dagster]"
 ```
 
-### Scaffold your first asset
+### Scaffold your first ingest file
 
 ```bash
-# REST
+# REST (plain Python — works with Prefect, Airflow, cron, or nothing)
 pr-agent scaffold rest --provider stripe --entity invoices
 
 # GraphQL
@@ -39,32 +42,64 @@ pr-agent scaffold graphql --provider github --entity issues
 
 # DB replication
 pr-agent scaffold db --engine postgres --table orders
+
+# Dagster variant (if your repo uses Dagster)
+pr-agent scaffold rest --provider stripe --entity invoices --framework dagster
 ```
 
-Each command creates a correctly structured asset file with the EU AI Act
-Art. 52 header, the right base class wired up, and TODOs for only the
-parts that are specific to your source.
+Each command creates a correctly structured file with the EU AI Act Art. 52
+header, the right base class wired up, and TODOs for only the parts that are
+specific to your source.
 
-### Wire up Definitions
+### Call from your pipeline
+
+The generated file exports a plain callable — import it from wherever your
+pipeline expects it:
+
+```python
+# e.g. a Prefect flow, an Airflow task, or a cron script
+from ingest.rest.stripe.invoices_asset import fetch_stripe_invoices
+
+fetch_stripe_invoices()   # writes JSON to tmp/, returns the path
+```
+
+Or call `.run()` directly:
+
+```python
+from ingest.rest.stripe.invoices_asset import StripeInvoices
+
+path, rows = StripeInvoices().run()
+```
+
+### Dagster: wire up Definitions
+
+If your repo uses Dagster, scaffold with `--framework dagster` and wire up:
 
 ```python
 # your_repo/defs.py
 from dagster import Definitions, load_assets_from_modules
-from pr_automation_agent import dev_env_secret_resolver_resource
+from pr_automation_agent.integrations.dagster import dev_env_secret_resolver_resource
 
 import your_repo.ingest.rest.stripe.invoices_asset as stripe_invoices
-# ... other asset modules ...
 
 defs = Definitions(
-    assets=load_assets_from_modules([stripe_invoices, ...]),
+    assets=load_assets_from_modules([stripe_invoices]),
     resources={"secret_resolver": dev_env_secret_resolver_resource},
 )
 ```
 
+### Set secrets in dev/CI
+
+`DevEnvSecretResolver` reads `PR_AGENT__<GROUP>__<KEY>` env vars:
+
+```bash
+export PR_AGENT__POSTGRES__URI="postgresql://user:pass@localhost/mydb"
+export PR_AGENT__POSTGRES__SINCE="2024-01-01"
+```
+
 ### Switch to a production secret backend
 
-`DevEnvSecretResolver` reads env vars. For production, implement
-`AbstractSecretResolver` against your secret store:
+Implement `AbstractSecretResolver` against your secret store:
 
 ```python
 from pr_automation_agent import AbstractSecretResolver, SecretReference
@@ -74,23 +109,19 @@ class AwsSsmSecretResolver(AbstractSecretResolver):
         import boto3
         client = boto3.client("ssm")
         param = client.get_parameter(
-            Name=f"/dagster/{ref.group_name}/{ref.key}",
+            Name=f"/pr-agent/{ref.group_name}/{ref.key}",
             WithDecryption=True,
         )
         return param["Parameter"]["Value"]
 ```
 
-Register it the same way:
+Pass it at construction time:
 
 ```python
-from dagster import resource
-
-@resource
-def aws_ssm_resolver():
-    return AwsSsmSecretResolver()
-
-defs = Definitions(assets=assets, resources={"secret_resolver": aws_ssm_resolver})
+path, rows = PostgresOrders(AwsSsmSecretResolver()).run()
 ```
+
+Or in Dagster, register it as a resource instead of `dev_env_secret_resolver_resource`.
 
 ### Record AI contributions (EU AI Act audit trail)
 

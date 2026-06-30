@@ -1,7 +1,11 @@
-"""Abstract base classes for the three core ingest patterns.
+"""Framework-agnostic base classes for the three core ingest patterns.
 
-Subclass one of these and implement the single abstract method.
-The base handles file I/O, metadata, and output path conventions.
+These classes have no dependency on Dagster, Prefect, Airflow, or any other
+pipeline framework. Subclass one and implement the single abstract method;
+call ``.run()`` from wherever your pipeline expects it.
+
+For Dagster-specific wrappers (``@asset``, ``AssetExecutionContext``) see
+``pr_automation_agent.integrations.dagster``.
 """
 
 import abc
@@ -10,29 +14,30 @@ import pathlib
 import datetime as dt
 from typing import Any
 
-from dagster import AssetExecutionContext, MetadataValue
-
-from .resolvers import AbstractSecretResolver, SecretReference
+from .resolvers import AbstractSecretResolver, DevEnvSecretResolver, SecretReference
 
 
-class BaseRestAsset(abc.ABC):
-    """Base for REST crawl assets.
+class BaseRestFetcher(abc.ABC):
+    """Base for REST ingest fetchers.
 
     Usage::
 
-        class MyApiInvoices(BaseRestAsset):
-            provider = "myapi"
+        class StripeInvoices(BaseRestFetcher):
+            provider = "stripe"
             entity = "invoices"
 
             def fetch_all(self) -> list[dict]:
                 import requests
-                r = requests.get("https://api.myservice.com/invoices", timeout=60)
+                r = requests.get(
+                    "https://api.stripe.com/v1/invoices",
+                    headers={"Authorization": f"Bearer {os.environ['STRIPE_KEY']}"},
+                    timeout=60,
+                )
                 r.raise_for_status()
-                return r.json()
+                return r.json()["data"]
 
-        @asset(group_name="rest_crawl")
-        def fetch_myapi_invoices(context: AssetExecutionContext) -> str:
-            return MyApiInvoices().materialize(context)
+        path, rows = StripeInvoices().run()
+        print(f"Wrote {rows} rows to {path}")
     """
 
     provider: str
@@ -49,36 +54,31 @@ class BaseRestAsset(abc.ABC):
         out.mkdir(parents=True, exist_ok=True)
         return out / f"{dt.date.today().isoformat()}.json"
 
-    def materialize(self, context: AssetExecutionContext) -> str:
+    def run(self) -> tuple[str, int]:
+        """Fetch, write to disk, return ``(path, row_count)``."""
         items = self.fetch_all()
         fp = self.output_path()
         fp.write_text(json.dumps(items, default=str), encoding="utf-8")
-        context.add_output_metadata({
-            "rows": MetadataValue.int(len(items)),
-            "path": MetadataValue.path(str(fp)),
-        })
-        return str(fp)
+        return str(fp), len(items)
 
 
-class BaseGraphQLAsset(abc.ABC):
-    """Base for single-request GraphQL crawl assets.
+class BaseGraphQLFetcher(abc.ABC):
+    """Base for single-request GraphQL fetchers.
 
-    For cursor-based pagination use ``PaginatedGraphQLAsset`` instead.
+    For cursor-based pagination use ``PaginatedGraphQLFetcher`` instead.
 
     Usage::
 
-        class GithubRepos(BaseGraphQLAsset):
-            provider = "github"
-            entity = "repos"
-            url = "https://api.github.com/graphql"
-            query = "{ viewer { repositories(first: 100) { nodes { name } } } }"
+        class CountriesData(BaseGraphQLFetcher):
+            provider = "countries"
+            entity = "countries"
+            url = "https://countries.trevorblades.com/"
+            query = "{ countries { code name } }"
 
             def extract_records(self, data: dict) -> list[dict]:
-                return data["viewer"]["repositories"]["nodes"]
+                return data["countries"]
 
-        @asset(group_name="graphql_crawl")
-        def fetch_github_repos(context: AssetExecutionContext) -> str:
-            return GithubRepos().materialize(context)
+        path, rows = CountriesData().run()
     """
 
     provider: str
@@ -93,7 +93,7 @@ class BaseGraphQLAsset(abc.ABC):
         ...
 
     def fetch_all(self) -> list[dict[str, Any]]:
-        import requests  # noqa: PLC0415 — optional at class definition time
+        import requests  # noqa: PLC0415
         r = requests.post(self.url, json={"query": self.query}, timeout=60)
         r.raise_for_status()
         return self.extract_records(r.json().get("data", {}))
@@ -103,47 +103,35 @@ class BaseGraphQLAsset(abc.ABC):
         out.mkdir(parents=True, exist_ok=True)
         return out / f"{dt.date.today().isoformat()}.json"
 
-    def materialize(self, context: AssetExecutionContext) -> str:
+    def run(self) -> tuple[str, int]:
+        """Fetch, write to disk, return ``(path, row_count)``."""
         items = self.fetch_all()
         fp = self.output_path()
         fp.write_text(json.dumps(items, default=str), encoding="utf-8")
-        context.add_output_metadata({
-            "rows": MetadataValue.int(len(items)),
-            "path": MetadataValue.path(str(fp)),
-        })
-        return str(fp)
+        return str(fp), len(items)
 
 
-class PaginatedGraphQLAsset(BaseGraphQLAsset):
-    """Base for cursor-paginated GraphQL assets.
+class PaginatedGraphQLFetcher(BaseGraphQLFetcher):
+    """Base for cursor-paginated GraphQL fetchers.
 
     Implement ``build_query(cursor)`` and ``extract_page(data)``
     instead of ``query`` and ``extract_records``.
 
     Usage::
 
-        class GithubIssues(PaginatedGraphQLAsset):
+        class GithubIssues(PaginatedGraphQLFetcher):
             provider = "github"
             entity = "issues"
             url = "https://api.github.com/graphql"
 
             def build_query(self, cursor: str | None) -> str:
                 after = f', after: "{cursor}"' if cursor else ""
-                return f'''
-                  {{ repository(owner:"octocat", name:"hello-world") {{
-                    issues(first: 100{after}) {{
-                      nodes {{ number title }}
-                      pageInfo {{ hasNextPage endCursor }}
-                    }}
-                  }} }}
-                '''
+                return f'{{ repository(owner:"octocat", name:"hello-world") {{ issues(first:100{after}) {{ nodes {{ number title }} pageInfo {{ hasNextPage endCursor }} }} }} }}'
 
             def extract_page(self, data: dict) -> tuple[list[dict], str | None]:
                 conn = data["repository"]["issues"]
                 cursor = conn["pageInfo"]["endCursor"] if conn["pageInfo"]["hasNextPage"] else None
                 return conn["nodes"], cursor
-
-        # extract_records is handled automatically via fetch_all — don't override it.
     """
 
     query: str = ""  # unused in paginated mode
@@ -155,7 +143,7 @@ class PaginatedGraphQLAsset(BaseGraphQLAsset):
     def extract_page(self, data: dict[str, Any]) -> tuple[list[dict[str, Any]], str | None]: ...
 
     def extract_records(self, data: dict[str, Any]) -> list[dict[str, Any]]:
-        raise NotImplementedError("Use build_query / extract_page for paginated assets.")
+        raise NotImplementedError("Use build_query / extract_page for paginated fetchers.")
 
     def fetch_all(self) -> list[dict[str, Any]]:
         import requests  # noqa: PLC0415
@@ -173,37 +161,44 @@ class PaginatedGraphQLAsset(BaseGraphQLAsset):
         return all_records
 
 
-class BaseDbReplicationAsset(abc.ABC):
-    """Base for incremental DB replication assets.
+class BaseDbReplicator(abc.ABC):
+    """Base for incremental DB replication fetchers.
 
-    Reads connection credentials via the ``secret_resolver`` Dagster resource.
-    Secrets must be registered as ``DAGSTER__<ENGINE_NAME>__URI`` and
-    ``DAGSTER__<ENGINE_NAME>__SINCE`` (when using ``DevEnvSecretResolver``).
+    Pass a ``secret_resolver`` at construction, or set
+    ``PR_AGENT__<ENGINE>__URI`` and ``PR_AGENT__<ENGINE>__SINCE`` env vars
+    to use the default ``DevEnvSecretResolver``.
 
     Usage::
 
-        class PostgresOrders(BaseDbReplicationAsset):
+        class PostgresOrders(BaseDbReplicator):
             engine_name = "postgres"
             table = "orders"
 
             def get_query(self, since: str) -> str:
                 return "SELECT * FROM orders WHERE updated_at >= :since"
 
-        @asset(group_name="db_replication", required_resource_keys={"secret_resolver"})
-        def replicate_postgres_orders(context: AssetExecutionContext) -> str:
-            return PostgresOrders().materialize(context)
+        path, rows = PostgresOrders().run()           # reads PR_AGENT__POSTGRES__* envs
+        # or:
+        path, rows = PostgresOrders(my_resolver).run()
     """
 
     engine_name: str
     table: str
     output_root: pathlib.Path = pathlib.Path("tmp")
 
+    def __init__(self, secret_resolver: AbstractSecretResolver | None = None) -> None:
+        self._resolver = secret_resolver or DevEnvSecretResolver()
+
     @abc.abstractmethod
     def get_query(self, since: str) -> str:
         """Return the SQL with a ``:since`` bind parameter for the watermark."""
         ...
 
-    def materialize(self, context: AssetExecutionContext) -> str:
+    def run(self) -> tuple[str, int]:
+        """Replicate, write Parquet to disk, return ``(path, row_count)``."""
+        return self._run_with_resolver(self._resolver)
+
+    def _run_with_resolver(self, resolver: AbstractSecretResolver) -> tuple[str, int]:
         try:
             from sqlalchemy import create_engine, text
             import pandas as pd
@@ -213,7 +208,6 @@ class BaseDbReplicationAsset(abc.ABC):
                 'Install with:  pip install "pr-automation-agent[dagster]"'
             ) from exc
 
-        resolver: AbstractSecretResolver = context.resources.secret_resolver
         uri = resolver.resolve_as_str(SecretReference(self.engine_name.upper(), "URI"))
         since = resolver.resolve_as_str(SecretReference(self.engine_name.upper(), "SINCE"))
 
@@ -224,9 +218,4 @@ class BaseDbReplicationAsset(abc.ABC):
         out.mkdir(parents=True, exist_ok=True)
         fp = out / f"{dt.date.today().isoformat()}.parquet"
         df.to_parquet(fp, index=False)
-
-        context.add_output_metadata({
-            "rows": MetadataValue.int(len(df)),
-            "path": MetadataValue.path(str(fp)),
-        })
-        return str(fp)
+        return str(fp), len(df)

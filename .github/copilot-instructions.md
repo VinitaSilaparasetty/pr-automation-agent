@@ -18,9 +18,14 @@ Do **not** claim to be a human author anywhere in the code or PR description.
 If the maintainer has the package installed, generate the file with:
 
 ```bash
-pr-agent scaffold rest   --provider <name> --entity <name>
+# Plain Python (works with any framework — default)
+pr-agent scaffold rest    --provider <name> --entity <name>
 pr-agent scaffold graphql --provider <name> --entity <name>
-pr-agent scaffold db     --engine <name>  --table <name>
+pr-agent scaffold db      --engine <name>  --table <name>
+
+# Dagster (if the repo uses Dagster)
+pr-agent scaffold rest --provider <name> --entity <name> --framework dagster
+pr-agent scaffold db   --engine <name>  --table <name>  --framework dagster
 ```
 
 Then fill in the TODOs. The scaffolder creates the correct file path,
@@ -32,8 +37,8 @@ names the function correctly, and inserts the Art. 52 header automatically.
 
 | Pattern | Path |
 |---------|------|
-| REST asset | `<ingest_root>/rest/<provider>/<entity>_asset.py` |
-| GraphQL asset | `<ingest_root>/graphql/<provider>/<entity>_asset.py` |
+| REST | `<ingest_root>/rest/<provider>/<entity>_asset.py` |
+| GraphQL | `<ingest_root>/graphql/<provider>/<entity>_asset.py` |
 | DB replication | `<ingest_root>/db/<engine>/<table>_replication_asset.py` |
 
 Create an `__init__.py` in every new directory.
@@ -46,58 +51,113 @@ Create an `__init__.py` in every new directory.
 | GraphQL | `fetch_<provider>_<entity>` |
 | DB | `replicate_<engine>_<table>` |
 
-## Use the base classes (required)
+---
+
+## Plain Python (default — no pipeline framework required)
 
 Always subclass from `pr_automation_agent`:
 
 ```python
-from pr_automation_agent import BaseRestAsset, BaseGraphQLAsset, BaseDbReplicationAsset
+from pr_automation_agent import BaseRestFetcher, BaseGraphQLFetcher, BaseDbReplicator
 ```
 
 Implement only the abstract method (`fetch_all`, `extract_records`, or `get_query`).
-The base class handles file I/O, output path, and Dagster metadata — don't re-implement these.
-
-## Decorators
+The base class handles file I/O and the output path. Call `.run()` from your
+pipeline, script, or cron job:
 
 ```python
-# REST
-@asset(group_name="rest_crawl")
-def fetch_<provider>_<entity>(context: AssetExecutionContext) -> str:
-    return _MyClass().materialize(context)
+class StripeInvoices(BaseRestFetcher):
+    provider = "stripe"
+    entity = "invoices"
 
-# GraphQL
-@asset(group_name="graphql_crawl")
-def fetch_<provider>_<entity>(context: AssetExecutionContext) -> str:
-    return _MyClass().materialize(context)
+    def fetch_all(self) -> list[dict]:
+        import requests
+        r = requests.get("https://api.stripe.com/v1/invoices", timeout=60)
+        r.raise_for_status()
+        return r.json()["data"]
+
+def fetch_stripe_invoices() -> str:
+    path, rows = StripeInvoices().run()
+    print(f"Wrote {rows} rows to {path}")
+    return path
+
+if __name__ == "__main__":
+    fetch_stripe_invoices()
+```
+
+---
+
+## Dagster (opt-in — only if the repo uses Dagster)
+
+Use the Dagster integration layer when the repo already runs Dagster:
+
+```python
+from pr_automation_agent.integrations.dagster import BaseRestAsset
+from dagster import asset, AssetExecutionContext
+
+class StripeInvoices(BaseRestAsset):
+    provider = "stripe"
+    entity = "invoices"
+
+    def fetch_all(self) -> list[dict]:
+        import requests
+        r = requests.get("https://api.stripe.com/v1/invoices", timeout=60)
+        r.raise_for_status()
+        return r.json()["data"]
+
+# REST / GraphQL — no resource key needed
+@asset(group_name="rest_crawl")
+def fetch_stripe_invoices(context: AssetExecutionContext) -> str:
+    return StripeInvoices().materialize(context)
 
 # DB — must declare secret_resolver resource
 @asset(group_name="db_replication", required_resource_keys={"secret_resolver"})
-def replicate_<engine>_<table>(context: AssetExecutionContext) -> str:
-    return _MyClass().materialize(context)
+def replicate_postgres_orders(context: AssetExecutionContext) -> str:
+    return _PostgresOrders().materialize(context)
 ```
 
-## Secrets
-
-Never hardcode credentials. Use the `secret_resolver` resource:
+Register in `defs.py`:
 
 ```python
-from pr_automation_agent import SecretReference
-uri = context.resources.secret_resolver.resolve_as_str(
-    SecretReference(group_name="MYDB", key="URI")
+from dagster import Definitions, load_assets_from_modules
+from pr_automation_agent.integrations.dagster import dev_env_secret_resolver_resource
+
+import myrepo.ingest.rest.stripe.invoices_asset as mod
+
+defs = Definitions(
+    assets=load_assets_from_modules([mod]),
+    resources={"secret_resolver": dev_env_secret_resolver_resource},
 )
 ```
 
-In dev/CI, set `DAGSTER__MYDB__URI=<value>` in the environment.
-In production, replace `DevEnvSecretResolver` with your secret backend.
+---
 
-## Registration
+## Secrets
 
-Add your module to your `defs.py` (or equivalent):
+Never hardcode credentials. Use `PR_AGENT__<GROUP>__<KEY>` env vars with
+`DevEnvSecretResolver` (the default), or implement `AbstractSecretResolver`
+for AWS SSM, GCP Secret Manager, etc.:
 
 ```python
-import <your_ingest_root>.<type>.<provider>.<entity>_asset as new_mod
-assets = load_assets_from_modules([..., new_mod])
+from pr_automation_agent import AbstractSecretResolver, SecretReference
+
+class AwsSsmResolver(AbstractSecretResolver):
+    def resolve_as_str(self, ref: SecretReference) -> str:
+        import boto3
+        client = boto3.client("ssm")
+        return client.get_parameter(
+            Name=f"/{ref.group_name}/{ref.key}", WithDecryption=True
+        )["Parameter"]["Value"]
 ```
+
+In dev/CI, set env vars:
+
+```bash
+export PR_AGENT__POSTGRES__URI="postgresql://user:pass@host/db"
+export PR_AGENT__POSTGRES__SINCE="2024-01-01"
+```
+
+---
 
 ## PR description
 
@@ -107,6 +167,8 @@ Tick the `[x] Yes` box and name the model used.
 ## Reference implementations
 
 See `examples/` for complete, working reference implementations:
-- REST: `examples/rest/jsonplaceholder/posts_asset.py`
-- GraphQL: `examples/graphql/countries/countries_asset.py`
-- DB: `examples/db/postgres/orders_replication_asset.py`
+- Plain Python: `examples/plain/rest/jsonplaceholder/posts_fetch.py`
+- Plain Python: `examples/plain/graphql/countries/countries_fetch.py`
+- Plain Python: `examples/plain/db/postgres/orders_replicate.py`
+- Dagster: `examples/dagster/rest/jsonplaceholder/posts_asset.py`
+- Dagster: `examples/dagster/defs.py`

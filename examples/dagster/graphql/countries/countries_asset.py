@@ -3,7 +3,7 @@
 # Human reviewer required before merging (see compliance/HUMAN_OVERSIGHT_POLICY.md)
 
 from dagster import asset, AssetExecutionContext
-from pr_automation_agent import BaseGraphQLAsset
+from pr_automation_agent.integrations.dagster import BaseGraphQLAsset
 
 
 class _CountriesGraphQL(BaseGraphQLAsset):

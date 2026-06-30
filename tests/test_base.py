@@ -1,18 +1,22 @@
-"""Smoke tests for the abstract base classes."""
+"""Smoke tests for the framework-agnostic base classes."""
 
 import json
 import pathlib
 import pytest
 from unittest.mock import MagicMock, patch
 
-from pr_automation_agent import BaseRestAsset, BaseGraphQLAsset, BaseDbReplicationAsset
+from pr_automation_agent import (
+    BaseRestFetcher,
+    BaseGraphQLFetcher,
+    BaseDbReplicator,
+)
 
 
 # ---------------------------------------------------------------------------
-# BaseRestAsset
+# BaseRestFetcher
 # ---------------------------------------------------------------------------
 
-class _StubRestAsset(BaseRestAsset):
+class _StubRestFetcher(BaseRestFetcher):
     provider = "stub"
     entity = "items"
 
@@ -20,28 +24,33 @@ class _StubRestAsset(BaseRestAsset):
         return [{"id": 1}, {"id": 2}]
 
 
-def test_rest_materialize_writes_json(tmp_path):
-    asset = _StubRestAsset()
-    asset.output_root = tmp_path
+def test_rest_run_returns_path_and_count(tmp_path):
+    fetcher = _StubRestFetcher()
+    fetcher.output_root = tmp_path
 
-    ctx = MagicMock()
-    result = asset.materialize(ctx)
+    path, rows = fetcher.run()
 
-    out_file = pathlib.Path(result)
-    assert out_file.exists()
-    data = json.loads(out_file.read_text())
-    assert len(data) == 2
-    ctx.add_output_metadata.assert_called_once()
-    meta = ctx.add_output_metadata.call_args[0][0]
-    assert "rows" in meta
-    assert "path" in meta
+    assert rows == 2
+    out = pathlib.Path(path)
+    assert out.exists()
+    assert json.loads(out.read_text()) == [{"id": 1}, {"id": 2}]
+
+
+def test_rest_run_writes_date_stamped_json(tmp_path):
+    import datetime as dt
+    fetcher = _StubRestFetcher()
+    fetcher.output_root = tmp_path
+
+    path, _ = fetcher.run()
+    assert dt.date.today().isoformat() in path
+    assert path.endswith(".json")
 
 
 # ---------------------------------------------------------------------------
-# BaseGraphQLAsset
+# BaseGraphQLFetcher
 # ---------------------------------------------------------------------------
 
-class _StubGraphQLAsset(BaseGraphQLAsset):
+class _StubGraphQLFetcher(BaseGraphQLFetcher):
     provider = "stub"
     entity = "nodes"
     url = "https://stub.example.com/graphql"
@@ -51,29 +60,26 @@ class _StubGraphQLAsset(BaseGraphQLAsset):
         return data.get("nodes", [])
 
 
-def test_graphql_materialize_writes_json(tmp_path):
-    asset = _StubGraphQLAsset()
-    asset.output_root = tmp_path
+def test_graphql_run_returns_path_and_count(tmp_path):
+    fetcher = _StubGraphQLFetcher()
+    fetcher.output_root = tmp_path
 
     mock_response = MagicMock()
     mock_response.json.return_value = {"data": {"nodes": [{"id": "a"}, {"id": "b"}]}}
     mock_response.raise_for_status = MagicMock()
 
-    ctx = MagicMock()
     with patch("requests.post", return_value=mock_response):
-        result = asset.materialize(ctx)
+        path, rows = fetcher.run()
 
-    out_file = pathlib.Path(result)
-    assert out_file.exists()
-    data = json.loads(out_file.read_text())
-    assert len(data) == 2
+    assert rows == 2
+    assert pathlib.Path(path).exists()
 
 
 # ---------------------------------------------------------------------------
-# BaseDbReplicationAsset — only checks error on missing deps
+# BaseDbReplicator
 # ---------------------------------------------------------------------------
 
-class _StubDbAsset(BaseDbReplicationAsset):
+class _StubDbReplicator(BaseDbReplicator):
     engine_name = "postgres"
     table = "orders"
 
@@ -81,6 +87,19 @@ class _StubDbAsset(BaseDbReplicationAsset):
         return "SELECT * FROM orders WHERE updated_at >= :since"
 
 
-def test_db_asset_abstract_method_required():
+def test_db_replicator_abstract_method_required():
     with pytest.raises(TypeError):
-        BaseDbReplicationAsset()  # type: ignore[abstract]
+        BaseDbReplicator()  # type: ignore[abstract]
+
+
+def test_db_replicator_accepts_custom_resolver():
+    from pr_automation_agent import DevEnvSecretResolver
+    resolver = DevEnvSecretResolver()
+    r = _StubDbReplicator(secret_resolver=resolver)
+    assert r._resolver is resolver
+
+
+def test_db_replicator_defaults_to_dev_env_resolver():
+    from pr_automation_agent import DevEnvSecretResolver
+    r = _StubDbReplicator()
+    assert isinstance(r._resolver, DevEnvSecretResolver)

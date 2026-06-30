@@ -1,4 +1,4 @@
-"""pr-agent CLI — scaffold new Dagster ingest asset files."""
+"""pr-agent CLI — scaffold new ingest asset files."""
 
 import datetime as dt
 import pathlib
@@ -8,7 +8,7 @@ import sys
 import click
 
 # ---------------------------------------------------------------------------
-# Templates
+# Shared header
 # ---------------------------------------------------------------------------
 
 _HEADER = """\
@@ -17,9 +17,108 @@ _HEADER = """\
 # Human reviewer required before merging (see compliance/HUMAN_OVERSIGHT_POLICY.md)
 """
 
-_REST_TEMPLATE = _HEADER + """
+# ---------------------------------------------------------------------------
+# Plain Python templates (default — no pipeline framework required)
+# ---------------------------------------------------------------------------
+
+_PLAIN_REST_TEMPLATE = _HEADER + """
+from pr_automation_agent import BaseRestFetcher
+import requests
+
+
+class _{cls}(BaseRestFetcher):
+    provider = "{provider}"
+    entity = "{entity}"
+
+    def fetch_all(self) -> list[dict]:
+        # TODO: replace with your real endpoint and auth headers
+        r = requests.get(
+            "https://api.{provider}.com/{entity}",
+            timeout=60,
+            # headers={{"Authorization": "Bearer <token>"}},
+        )
+        r.raise_for_status()
+        return r.json()  # TODO: adapt to actual response shape
+
+
+def fetch_{provider}_{entity}() -> str:
+    \"\"\"Fetch {entity} from {provider} and write to disk. Returns the output path.\"\"\"
+    path, rows = _{cls}().run()
+    print(f"Wrote {{rows}} rows to {{path}}")
+    return path
+
+
+if __name__ == "__main__":
+    fetch_{provider}_{entity}()
+"""
+
+_PLAIN_GRAPHQL_TEMPLATE = _HEADER + """
+from pr_automation_agent import BaseGraphQLFetcher
+
+
+class _{cls}(BaseGraphQLFetcher):
+    provider = "{provider}"
+    entity = "{entity}"
+    url = "https://api.{provider}.com/graphql"  # TODO: update URL
+    query = \"\"\"
+        {{
+            {entity}(first: 100) {{
+                nodes {{ id name }}            # TODO: match your schema
+            }}
+        }}
+    \"\"\"
+
+    def extract_records(self, data: dict) -> list[dict]:
+        # TODO: update this path to match your GraphQL response
+        return data["{entity}"]["nodes"]
+
+
+def fetch_{provider}_{entity}() -> str:
+    \"\"\"Fetch {entity} from {provider} GraphQL API and write to disk. Returns the output path.\"\"\"
+    path, rows = _{cls}().run()
+    print(f"Wrote {{rows}} rows to {{path}}")
+    return path
+
+
+if __name__ == "__main__":
+    fetch_{provider}_{entity}()
+"""
+
+_PLAIN_DB_TEMPLATE = _HEADER + """
+from pr_automation_agent import BaseDbReplicator, DevEnvSecretResolver
+
+
+class _{cls}(BaseDbReplicator):
+    engine_name = "{engine}"
+    table = "{table}"
+
+    def get_query(self, since: str) -> str:
+        # TODO: update watermark column name if not updated_at
+        return "SELECT * FROM {table} WHERE updated_at >= :since"
+
+
+def replicate_{engine}_{table}() -> str:
+    \"\"\"Replicate {table} incrementally and write Parquet to disk. Returns the output path.
+
+    Reads PR_AGENT__{engine_upper}__URI and PR_AGENT__{engine_upper}__SINCE from env,
+    or pass a custom resolver: {cls}(my_resolver).run()
+    \"\"\"
+    path, rows = _{cls}().run()
+    print(f"Wrote {{rows}} rows to {{path}}")
+    return path
+
+
+if __name__ == "__main__":
+    replicate_{engine}_{table}()
+"""
+
+# ---------------------------------------------------------------------------
+# Dagster templates (--framework dagster)
+# ---------------------------------------------------------------------------
+
+_DAGSTER_REST_TEMPLATE = _HEADER + """
 from dagster import asset, AssetExecutionContext
-from pr_automation_agent import BaseRestAsset
+from pr_automation_agent.integrations.dagster import BaseRestAsset
 import requests
 
 
@@ -43,9 +142,9 @@ def fetch_{provider}_{entity}(context: AssetExecutionContext) -> str:
     return _{cls}().materialize(context)
 """
 
-_GRAPHQL_TEMPLATE = _HEADER + """
+_DAGSTER_GRAPHQL_TEMPLATE = _HEADER + """
 from dagster import asset, AssetExecutionContext
-from pr_automation_agent import BaseGraphQLAsset
+from pr_automation_agent.integrations.dagster import BaseGraphQLAsset
 
 
 class _{cls}(BaseGraphQLAsset):
@@ -70,9 +169,9 @@ def fetch_{provider}_{entity}(context: AssetExecutionContext) -> str:
     return _{cls}().materialize(context)
 """
 
-_DB_TEMPLATE = _HEADER + """
+_DAGSTER_DB_TEMPLATE = _HEADER + """
 from dagster import asset, AssetExecutionContext
-from pr_automation_agent import BaseDbReplicationAsset
+from pr_automation_agent.integrations.dagster import BaseDbReplicationAsset
 
 
 class _{cls}(BaseDbReplicationAsset):
@@ -110,15 +209,21 @@ def _safe_id(value: str) -> str:
 @click.group()
 @click.version_option(package_name="pr-automation-agent")
 def cli():
-    """pr-automation-agent — scaffold EU AI Act-compliant Dagster ingest assets."""
+    """pr-automation-agent — scaffold EU AI Act-compliant ingest asset files."""
 
 
 @cli.command()
 @click.argument("asset_type", metavar="TYPE", type=click.Choice(["rest", "graphql", "db"]))
-@click.option("--provider", default=None, help="Provider name, e.g. stripe, github, hubspot (rest/graphql)")
+@click.option("--provider", default=None, help="Provider name, e.g. stripe, github (rest/graphql)")
 @click.option("--entity", help="Entity/resource name, e.g. invoices, issues (rest/graphql)")
-@click.option("--engine", help="DB engine name, e.g. postgres, mysql (db type only)")
-@click.option("--table", help="Table name (db type only)")
+@click.option("--engine", help="DB engine name, e.g. postgres, mysql (db only)")
+@click.option("--table", help="Table name (db only)")
+@click.option(
+    "--framework",
+    default=None,
+    type=click.Choice(["dagster"]),
+    help="Pipeline framework. Omit for plain Python (works with any framework or none).",
+)
 @click.option(
     "--output-dir",
     default=".",
@@ -126,14 +231,19 @@ def cli():
     help="Directory to write the generated file into",
 )
 @click.option("--dry-run", is_flag=True, help="Print the generated file without writing it")
-def scaffold(asset_type, provider, entity, engine, table, output_dir, dry_run):
-    """Generate a new Dagster ingest asset file.
+def scaffold(asset_type, provider, entity, engine, table, framework, output_dir, dry_run):
+    """Generate a new ingest asset file.
 
     \b
-    Examples:
+    Plain Python (works with any framework or none):
       pr-agent scaffold rest    --provider stripe  --entity invoices
       pr-agent scaffold graphql --provider github  --entity issues
       pr-agent scaffold db      --engine postgres  --table orders
+
+    \b
+    Dagster:
+      pr-agent scaffold rest    --provider stripe  --entity invoices  --framework dagster
+      pr-agent scaffold db      --engine postgres  --table orders     --framework dagster
     """
     today = dt.date.today().isoformat()
 
@@ -144,22 +254,15 @@ def scaffold(asset_type, provider, entity, engine, table, output_dir, dry_run):
             raise click.UsageError("--entity is required for rest and graphql types.")
         provider = _safe_id(provider)
         entity = _safe_id(entity)
+        cls = _to_class_name(provider, entity)
 
         if asset_type == "rest":
-            code = _REST_TEMPLATE.format(
-                date=today,
-                cls=_to_class_name(provider, entity),
-                provider=provider,
-                entity=entity,
-            )
+            tmpl = _DAGSTER_REST_TEMPLATE if framework == "dagster" else _PLAIN_REST_TEMPLATE
+            code = tmpl.format(date=today, cls=cls, provider=provider, entity=entity)
             rel_path = pathlib.Path("rest") / provider / f"{entity}_asset.py"
         else:
-            code = _GRAPHQL_TEMPLATE.format(
-                date=today,
-                cls=_to_class_name(provider, entity),
-                provider=provider,
-                entity=entity,
-            )
+            tmpl = _DAGSTER_GRAPHQL_TEMPLATE if framework == "dagster" else _PLAIN_GRAPHQL_TEMPLATE
+            code = tmpl.format(date=today, cls=cls, provider=provider, entity=entity)
             rel_path = pathlib.Path("graphql") / provider / f"{entity}_asset.py"
 
     else:  # db
@@ -169,11 +272,12 @@ def scaffold(asset_type, provider, entity, engine, table, output_dir, dry_run):
             raise click.UsageError("--table is required for db type.")
         engine = _safe_id(engine)
         table = _safe_id(table)
-        code = _DB_TEMPLATE.format(
-            date=today,
-            cls=_to_class_name(engine, table),
-            engine=engine,
-            table=table,
+        cls = _to_class_name(engine, table)
+
+        tmpl = _DAGSTER_DB_TEMPLATE if framework == "dagster" else _PLAIN_DB_TEMPLATE
+        code = tmpl.format(
+            date=today, cls=cls, engine=engine, table=table,
+            engine_upper=engine.upper(),
         )
         rel_path = pathlib.Path("db") / engine / f"{table}_replication_asset.py"
 
@@ -194,14 +298,12 @@ def scaffold(asset_type, provider, entity, engine, table, output_dir, dry_run):
             init.touch()
 
     if dest.exists():
-        click.confirm(
-            f"File already exists: {dest}\nOverwrite?", abort=True
-        )
+        click.confirm(f"File already exists: {dest}\nOverwrite?", abort=True)
 
     dest.write_text(code, encoding="utf-8")
     click.echo(f"Created: {dest}")
 
-    # Show import path relative to CWD so the hint is copy-pasteable
+    # Import hint relative to CWD
     cwd = pathlib.Path.cwd().resolve()
     try:
         import_base = dest.with_suffix("").relative_to(cwd)
@@ -209,6 +311,10 @@ def scaffold(asset_type, provider, entity, engine, table, output_dir, dry_run):
     except ValueError:
         import_str = ".".join(rel_path.with_suffix("").parts)
 
-    click.echo("\nNext: register in your defs.py:")
-    click.echo(f"  import {import_str} as new_mod")
-    click.echo("  assets = load_assets_from_modules([..., new_mod])")
+    if framework == "dagster":
+        click.echo("\nNext: register in your defs.py:")
+        click.echo(f"  import {import_str} as new_mod")
+        click.echo("  assets = load_assets_from_modules([..., new_mod])")
+    else:
+        click.echo(f"\nNext: call  {import_str}.{rel_path.stem.split('_asset')[0] or rel_path.stem}()")
+        click.echo("Or import and call the function directly from your pipeline/script.")

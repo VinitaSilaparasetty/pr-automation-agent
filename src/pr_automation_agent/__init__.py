@@ -1,15 +1,20 @@
+"""pr-automation-agent — framework-agnostic core.
+
+For Dagster-specific helpers (BaseRestAsset, dev_env_secret_resolver_resource, etc.)
+see ``pr_automation_agent.integrations.dagster``.
+"""
+
 from .resolvers import (
     AbstractSecretResolver,
     DevEnvSecretResolver,
     SecretReference,
-    dev_env_secret_resolver_resource,
 )
 from .audit import log_ai_contribution
 from .base import (
-    BaseRestAsset,
-    BaseGraphQLAsset,
-    PaginatedGraphQLAsset,
-    BaseDbReplicationAsset,
+    BaseRestFetcher,
+    BaseGraphQLFetcher,
+    PaginatedGraphQLFetcher,
+    BaseDbReplicator,
 )
 
 __all__ = [
@@ -17,12 +22,11 @@ __all__ = [
     "AbstractSecretResolver",
     "DevEnvSecretResolver",
     "SecretReference",
-    "dev_env_secret_resolver_resource",
     # Audit
     "log_ai_contribution",
-    # Base asset classes
-    "BaseRestAsset",
-    "BaseGraphQLAsset",
-    "PaginatedGraphQLAsset",
-    "BaseDbReplicationAsset",
+    # Base fetcher/replicator classes
+    "BaseRestFetcher",
+    "BaseGraphQLFetcher",
+    "PaginatedGraphQLFetcher",
+    "BaseDbReplicator",
 ]
