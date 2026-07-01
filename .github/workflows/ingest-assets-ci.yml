@@ -26,11 +26,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
           enable-cache: false
 
+      - name: Create virtual environment
+        run: uv venv
+
       - name: Install dev dependencies
         run: uv pip install -e ".[dev]"
 
       - name: Run tests
-        run: pytest tests/ -v
+        run: uv run pytest tests/ -v
 
   dagster-integration:
     name: Dagster asset integration
@@ -43,21 +46,24 @@ jobs:
           python-version: "3.11"
           enable-cache: false
 
+      - name: Create virtual environment
+        run: uv venv
+
       - name: Install package + dagster extras
         run: uv pip install -e ".[dagster]"
 
       - name: List all assets
-        run: dagster asset list -m examples.dagster.defs
+        run: uv run dagster asset list -m examples.dagster.defs
         env:
           PYTHONWARNINGS: "ignore::UserWarning"
 
       - name: Materialize REST example
-        run: dagster asset materialize --select fetch_jsonplaceholder_posts -m examples.dagster.defs
+        run: uv run dagster asset materialize --select fetch_jsonplaceholder_posts -m examples.dagster.defs
         env:
           PYTHONWARNINGS: "ignore::UserWarning"
 
       - name: Materialize GraphQL example
-        run: dagster asset materialize --select fetch_countries_countries -m examples.dagster.defs
+        run: uv run dagster asset materialize --select fetch_countries_countries -m examples.dagster.defs
         env:
           PYTHONWARNINGS: "ignore::UserWarning"
 
@@ -80,14 +86,17 @@ jobs:
           python-version: "3.11"
           enable-cache: false
 
+      - name: Create virtual environment
+        run: uv venv
+
       - name: Install package
         run: uv pip install -e .
 
       - name: Scaffold a REST asset (dry-run)
-        run: pr-agent scaffold rest --provider acme --entity invoices --dry-run
+        run: uv run pr-agent scaffold rest --provider acme --entity invoices --dry-run
 
       - name: Scaffold a GraphQL asset (dry-run)
-        run: pr-agent scaffold graphql --provider acme --entity products --dry-run
+        run: uv run pr-agent scaffold graphql --provider acme --entity products --dry-run
 
       - name: Scaffold a DB asset (dry-run)
-        run: pr-agent scaffold db --engine postgres --table orders --dry-run
+        run: uv run pr-agent scaffold db --engine postgres --table orders --dry-run
