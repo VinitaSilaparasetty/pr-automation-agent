@@ -5,6 +5,10 @@
 Works with plain Python, Prefect, Airflow, Dagster, or any pipeline framework.
 Zero pipeline framework required for the core package.
 
+[![PyPI version](https://img.shields.io/pypi/v/pr-automation-agent)](https://pypi.org/project/pr-automation-agent/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pr-automation-agent)](https://pypi.org/project/pr-automation-agent/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/pr-automation-agent)](https://pypi.org/project/pr-automation-agent/)
+
 <img src="docs/assets/welcome.svg" alt="pr-agent welcome screen" width="700"/>
 
 ---
