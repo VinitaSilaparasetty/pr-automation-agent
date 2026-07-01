@@ -216,12 +216,6 @@ _LOGO_LINES = [
     r"       ╱    ╲       ",  # triangle widens       ╱@7 ╲@12
     r"  ○───╱      ╲───○  ",  # side nodes            ╱@6 ╲@13
     r"~~~~~~~~~~~~~~~~~~~~",  # circuit wave crossbar
-    r"   ╱╲        ╱╲     ",  # four legs start
-    r"  ╱  ╲      ╱  ╲    ",  # legs spread
-    r" ╱    ╲    ╱    ╲   ",  # legs widen
-    r"○      ╲  ╱      ○  ",  # outer nodes; inner legs converge
-    r"        ╲╱          ",  # inner legs meet
-    r"         ○          ",  # bottom centre node
     r" Aevoxis Solutions  ",  # wordmark (20 chars)
 ]
 
