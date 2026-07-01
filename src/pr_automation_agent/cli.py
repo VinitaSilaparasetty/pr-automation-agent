@@ -215,7 +215,6 @@ _LOGO_LINES = [
     r"    └───╱──╲──┘     ",  # stems join triangle  ╱@8 ╲@11
     r"       ╱    ╲       ",  # triangle widens       ╱@7 ╲@12
     r"  ○───╱      ╲───○  ",  # side nodes            ╱@6 ╲@13
-    r"~~~~~~~~~~~~~~~~~~~~",  # circuit wave crossbar
     r" Aevoxis Solutions  ",  # wordmark (20 chars)
 ]
 
