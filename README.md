@@ -9,7 +9,7 @@ Zero pipeline framework required for the core package.
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pr-automation-agent)](https://pypi.org/project/pr-automation-agent/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/pr-automation-agent)](https://pypi.org/project/pr-automation-agent/)
 
-<img src="docs/assets/welcome.svg" alt="pr-agent welcome screen" width="700"/>
+<img src="https://raw.githubusercontent.com/VinitaSilaparasetty/pr-automation-agent/main/docs/assets/welcome.png" alt="pr-agent welcome screen" width="700"/>
 
 ---
 
@@ -91,7 +91,7 @@ or Django management command.
 pr-agent scaffold rest --provider stripe --entity invoices
 ```
 
-<img src="docs/assets/scaffold-rest.svg" alt="scaffold rest output" width="700"/>
+<img src="https://raw.githubusercontent.com/VinitaSilaparasetty/pr-automation-agent/main/docs/assets/scaffold-rest.png" alt="scaffold rest output" width="700"/>
 
 This writes `rest/stripe/invoices_asset.py` (relative to your working directory)
 and creates `__init__.py` in every new subdirectory automatically.
@@ -184,7 +184,7 @@ EXAMPLES:
   pr-agent scaffold rest    --provider stripe  --entity invoices --framework dagster
 ```
 
-<img src="docs/assets/scaffold-db.svg" alt="scaffold db output" width="700"/>
+<img src="https://raw.githubusercontent.com/VinitaSilaparasetty/pr-automation-agent/main/docs/assets/scaffold-db.png" alt="scaffold db output" width="700"/>
 
 **Every generated file includes:**
 - An EU AI Act Art. 52 header (date-stamped, names the tool)
