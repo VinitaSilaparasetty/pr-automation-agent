@@ -207,19 +207,6 @@ def _safe_id(value: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-# 20 visible chars per line.  ╱ shifts left -1/row, ╲ shifts right +1/row
-# from the peak — giving a clean A-frame.  Below the ≈≈≈ crossbar the legs
-# fork outward to four nodes, with a single bottom node at centre.
-_LOGO_LINES = [
-    r"    o         o     ",  # top nodes @4, @14
-    r"    │    ╱╲   │     ",  # stems + triangle peak ╱@9 ╲@10
-    r"    └───╱──╲──┘     ",  # stems join triangle  ╱@8 ╲@11
-    r"       ╱    ╲       ",  # triangle widens       ╱@7 ╲@12
-    r"  o───╱      ╲───o  ",  # side nodes            ╱@6 ╲@13
-    r" Aevoxis Solutions  ",  # wordmark (20 chars)
-]
-
-
 def _welcome() -> None:
     """Print the welcome banner when pr-agent is invoked with no subcommand."""
     from importlib.metadata import version as _v, PackageNotFoundError
@@ -245,23 +232,16 @@ def _welcome() -> None:
         pad = max(0, (w - raw_len) // 2)
         return " " * pad + text
 
+    wordmark = (
+        click.style("Aevoxis", fg="bright_blue", bold=True)
+        + " "
+        + click.style("Solutions", fg="blue")
+    )
+
     click.echo()
     click.echo(border)
     click.echo()
-    _W = 20  # visual width of every logo line
-    for i, line in enumerate(_LOGO_LINES):
-        if i == len(_LOGO_LINES) - 1:
-            # wordmark — style "Aevoxis" bold, "Solutions" regular (visual width = 20)
-            styled = (
-                " "
-                + click.style("Aevoxis", fg="bright_blue", bold=True)
-                + " "
-                + click.style("Solutions", fg="blue")
-                + "  "
-            )
-            click.echo(center(styled, _W))
-        else:
-            click.echo(center(click.style(line, fg="bright_blue"), _W))
+    click.echo(center(wordmark, len("Aevoxis Solutions")))
     click.echo()
     click.echo(center(title,  len("pr-automation-agent")))
     click.echo(center(tag,    len("EU AI Act-compliant ingest scaffold for GitHub Copilot")))
