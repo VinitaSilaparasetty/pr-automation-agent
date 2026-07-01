@@ -215,7 +215,7 @@ _LOGO_LINES = [
     r"    └───╱──╲──┘     ",  # stems join triangle  ╱@8 ╲@11
     r"       ╱    ╲       ",  # triangle widens       ╱@7 ╲@12
     r"  ○───╱      ╲───○  ",  # side nodes            ╱@6 ╲@13
-    r"≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈",  # circuit wave crossbar
+    r"~~~~~~~~~~~~~~~~~~~~",  # circuit wave crossbar
     r"   ╱╲        ╱╲     ",  # four legs start
     r"  ╱  ╲      ╱  ╲    ",  # legs spread
     r" ╱    ╲    ╱    ╲   ",  # legs widen
