@@ -19,11 +19,12 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: false
 
       - name: Install dev dependencies
         run: uv pip install -e ".[dev]"
@@ -35,11 +36,12 @@ jobs:
     name: Dagster asset integration
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.11"
+          enable-cache: false
 
       - name: Install package + dagster extras
         run: uv pip install -e ".[dagster]"
@@ -61,7 +63,7 @@ jobs:
 
       - name: Upload example outputs as artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: example-outputs-${{ github.run_id }}
           path: tmp/
@@ -71,11 +73,12 @@ jobs:
     name: pr-agent CLI smoke test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.11"
+          enable-cache: false
 
       - name: Install package
         run: uv pip install -e .
