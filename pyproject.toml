@@ -53,5 +53,18 @@ Issues = "https://github.com/VinitaSilaparasetty/pr-automation-agent/issues"
 [tool.hatch.build.targets.wheel]
 packages = ["src/pr_automation_agent"]
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/",
+    "compliance/AI_TRANSPARENCY_NOTICE.md",
+    "compliance/HUMAN_OVERSIGHT_POLICY.md",
+    "examples/",
+    "tests/",
+    "README.md",
+    "LICENSE",
+    "PRIVACY.md",
+    "CONNECTING.md",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
