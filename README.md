@@ -305,6 +305,17 @@ See [CONNECTING.md](CONNECTING.md) for:
 
 ---
 
+## Feedback & contributing
+
+[![Report a bug](https://img.shields.io/badge/Report%20a%20bug-red?style=for-the-badge&logo=github)](https://github.com/VinitaSilaparasetty/pr-automation-agent/issues/new?template=bug_report.yml)
+[![Request a feature](https://img.shields.io/badge/Request%20a%20feature-blue?style=for-the-badge&logo=github)](https://github.com/VinitaSilaparasetty/pr-automation-agent/issues/new?template=feature_request.yml)
+[![Request a new ingest asset](https://img.shields.io/badge/Request%20a%20new%20ingest%20asset-green?style=for-the-badge&logo=github)](https://github.com/VinitaSilaparasetty/pr-automation-agent/issues/new?template=new_ingest_asset.yml)
+
+All bug reports, feature requests, and ingest asset requests are tracked in [GitHub Issues](https://github.com/VinitaSilaparasetty/pr-automation-agent/issues).
+Questions and general discussion go in [GitHub Discussions](https://github.com/VinitaSilaparasetty/pr-automation-agent/discussions).
+
+---
+
 ## License
 
 GNU Affero General Public License v3 (AGPL-3.0).  

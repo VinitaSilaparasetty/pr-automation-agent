@@ -1,0 +1,55 @@
+name: "Bug report"
+description: "Something is broken or behaving unexpectedly."
+labels: ["bug"]
+body:
+  - type: input
+    id: command
+    attributes:
+      label: Command you ran
+      placeholder: "e.g. pr-agent scaffold rest --provider stripe --entity invoices"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened
+      description: Paste the full error output or unexpected behaviour
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      placeholder: "e.g. 0.1.0  (run: pr-agent --version)"
+    validations:
+      required: true
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "e.g. 3.12.3  (run: python --version)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: framework
+    attributes:
+      label: Framework
+      options:
+        - Plain Python (no framework)
+        - Dagster
+        - Prefect
+        - Airflow
+        - Other
+    validations:
+      required: true
