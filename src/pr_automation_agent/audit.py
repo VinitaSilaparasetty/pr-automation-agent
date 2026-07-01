@@ -5,9 +5,6 @@ import datetime
 import pathlib
 
 
-_LOG_PATH = pathlib.Path(__file__).parent.parent.parent / "compliance" / "audit_log" / "contributions.jsonl"
-
-
 def log_ai_contribution(
     *,
     file_path: str,
@@ -15,14 +12,16 @@ def log_ai_contribution(
     human_reviewer: str | None = None,
     pr_number: str | None = None,
     notes: str = "",
+    output_dir: pathlib.Path | None = None,
 ) -> None:
     """Append one JSON-line record to the audit log.
 
+    Writes to <output_dir>/contributions.jsonl, defaulting to
+    compliance/audit_log/ relative to the current working directory.
     Call this after an AI-generated file is merged, not during generation.
-    The log is gitignored so it accumulates locally; copy to a durable
-    store (S3, BigQuery) for long-term compliance evidence.
     """
-    _LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    log_path = (output_dir or pathlib.Path.cwd() / "compliance" / "audit_log") / "contributions.jsonl"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
     record = {
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
         "file": file_path,
@@ -32,5 +31,5 @@ def log_ai_contribution(
         "notes": notes,
         "eu_ai_act_articles": ["Art. 50", "Art. 52"],
     }
-    with _LOG_PATH.open("a", encoding="utf-8") as fh:
+    with log_path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(record) + "\n")

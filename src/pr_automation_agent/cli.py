@@ -411,5 +411,9 @@ def scaffold(asset_type, provider, entity, engine, table, framework, output_dir,
         click.echo(f"  import {import_str} as new_mod")
         click.echo("  assets = load_assets_from_modules([..., new_mod])")
     else:
-        click.echo(f"\nNext: call  {import_str}.{rel_path.stem.split('_asset')[0] or rel_path.stem}()")
+        if asset_type == "db":
+            fn_name = f"replicate_{engine}_{table}"
+        else:
+            fn_name = f"fetch_{provider}_{entity}"
+        click.echo(f"\nNext: call  {import_str}.{fn_name}()")
         click.echo("Or import and call the function directly from your pipeline/script.")
