@@ -211,11 +211,11 @@ def _safe_id(value: str) -> str:
 # from the peak — giving a clean A-frame.  Below the ≈≈≈ crossbar the legs
 # fork outward to four nodes, with a single bottom node at centre.
 _LOGO_LINES = [
-    r"    ○         ○     ",  # top nodes @4, @14
+    r"    o         o     ",  # top nodes @4, @14
     r"    │    ╱╲   │     ",  # stems + triangle peak ╱@9 ╲@10
     r"    └───╱──╲──┘     ",  # stems join triangle  ╱@8 ╲@11
     r"       ╱    ╲       ",  # triangle widens       ╱@7 ╲@12
-    r"  ○───╱      ╲───○  ",  # side nodes            ╱@6 ╲@13
+    r"  o───╱      ╲───o  ",  # side nodes            ╱@6 ╲@13
     r" Aevoxis Solutions  ",  # wordmark (20 chars)
 ]
 
