@@ -5,16 +5,16 @@ build-backend = "hatchling.build"
 [project]
 name = "pr-automation-agent"
 version = "0.1.0"
-description = "EU AI Act-compliant scaffold and utilities for automating Dagster ingest PRs with GitHub Copilot"
+description = "EU AI Act-compliant scaffold and utilities for automating ingest PRs with GitHub Copilot"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "Apache-2.0" }
-authors = [{ name = "Vinita Silaparasetty" }]
+license = { text = "AGPL-3.0-only" }
+authors = [{ name = "Vinita Silaparasetty", email = "info@aevoxis.de" }]
 keywords = ["dagster", "copilot", "ingest", "automation", "eu-ai-act", "pr-automation"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

@@ -157,4 +157,7 @@ including how to plug in production secret backends.
 
 ## License
 
-Apache 2.0
+GNU Affero General Public License v3 (AGPL-3.0).
+Copyright (C) 2025 Vinita Silaparasetty, Aevoxis Solutions.
+
+For commercial use, enterprise deployment, or licensing inquiries: info@aevoxis.de
