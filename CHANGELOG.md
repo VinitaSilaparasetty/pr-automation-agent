@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1 — 2026-07-01
+
+- Fix: screenshots now display correctly on PyPI (converted to PNG with absolute URLs)
+
 ## 0.1.0 — 2026-07-01
 
 Initial release.
