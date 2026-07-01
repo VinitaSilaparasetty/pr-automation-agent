@@ -206,6 +206,22 @@ def _safe_id(value: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+# 19 visible chars per line; ╱ moves left by 1 col per row and ╲ moves
+# right by 1 col per row so the A widens uniformly. Centre axis = col 9.
+_LOGO_LINES = [
+    r"   ○     ○     ○   ",  # col 3,9,15  — three circuit nodes
+    r"   │     │     │   ",  # stems
+    r"○──┘     │     └──○",  # side nodes; ┘/└ anchor at col 3/15
+    r"       ╱   ╲       ",  # ╱@7  ╲@11
+    r"      ╱     ╲      ",  # ╱@6  ╲@12
+    r"≈≈≈≈≈╱       ╲     ",  # ╱@5  ╲@13 — wave enters from left
+    r"    ╱   ≈≈    ╲≈≈≈ ",  # ╱@4  ╲@14 — wave exits to the right
+    r"   ╱           ╲   ",  # ╱@3  ╲@15
+    r"  ╱             ╲  ",  # ╱@2  ╲@16
+    r"  Aevoxis Solutions",  # wordmark
+]
+
+
 def _welcome() -> None:
     """Print the welcome banner when pr-agent is invoked with no subcommand."""
     from importlib.metadata import version as _v, PackageNotFoundError
@@ -233,9 +249,25 @@ def _welcome() -> None:
 
     click.echo()
     click.echo(border)
+    click.echo()
+    _W = 19  # visual width of every logo line
+    for i, line in enumerate(_LOGO_LINES):
+        if i == len(_LOGO_LINES) - 1:
+            # wordmark — style "Aevoxis" bold, "Solutions" regular
+            styled = (
+                "  "
+                + click.style("Aevoxis", fg="bright_blue", bold=True)
+                + " "
+                + click.style("Solutions", fg="blue")
+            )
+            click.echo(center(styled, _W))
+        else:
+            click.echo(center(click.style(line, fg="bright_blue"), _W))
+    click.echo()
     click.echo(center(title,  len("pr-automation-agent")))
     click.echo(center(tag,    len("EU AI Act-compliant ingest scaffold for GitHub Copilot")))
     click.echo(center(v_str,  len(f"v{ver}")))
+    click.echo()
     click.echo(border)
     click.echo()
 
