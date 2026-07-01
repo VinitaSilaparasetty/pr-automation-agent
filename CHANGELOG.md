@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2 — 2026-07-01
+
+- Fix: logo nodes use ASCII `o` instead of `○` (double-width in Rich SVG, causing misalignment)
+- Fix: remove downloads badge (pypistats.org indexes new packages with a 24h delay)
+
 ## 0.1.1 — 2026-07-01
 
 - Fix: screenshots now display correctly on PyPI (converted to PNG with absolute URLs)
