@@ -206,10 +206,73 @@ def _safe_id(value: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-@click.group()
+def _welcome() -> None:
+    """Print the welcome banner when pr-agent is invoked with no subcommand."""
+    from importlib.metadata import version as _v, PackageNotFoundError
+    try:
+        ver = _v("pr-automation-agent")
+    except PackageNotFoundError:
+        ver = "dev"
+
+    w = 60
+    border = click.style("─" * w, fg="bright_blue")
+    title  = click.style("pr-automation-agent", fg="bright_blue", bold=True)
+    tag    = click.style(
+        "EU AI Act-compliant ingest scaffold for GitHub Copilot",
+        fg="white",
+    )
+    v_str  = click.style(f"v{ver}", fg="bright_black")
+    copy_  = click.style(
+        "© 2025 Vinita Silaparasetty, Aevoxis Solutions  •  AGPL-3.0",
+        fg="bright_black",
+    )
+
+    def center(text: str, raw_len: int) -> str:
+        pad = max(0, (w - raw_len) // 2)
+        return " " * pad + text
+
+    click.echo()
+    click.echo(border)
+    click.echo(center(title,  len("pr-automation-agent")))
+    click.echo(center(tag,    len("EU AI Act-compliant ingest scaffold for GitHub Copilot")))
+    click.echo(center(v_str,  len(f"v{ver}")))
+    click.echo(border)
+    click.echo()
+
+    click.echo(click.style("  Getting started", fg="bright_blue", bold=True))
+    click.echo()
+    click.echo(f"  {'Scaffold a REST ingest file':30s}  "
+               + click.style("pr-agent scaffold rest --provider stripe --entity invoices", fg="green"))
+    click.echo(f"  {'Scaffold a GraphQL ingest file':30s}  "
+               + click.style("pr-agent scaffold graphql --provider github --entity issues", fg="green"))
+    click.echo(f"  {'Scaffold a DB replication file':30s}  "
+               + click.style("pr-agent scaffold db --engine postgres --table orders", fg="green"))
+    click.echo(f"  {'Preview without writing':30s}  "
+               + click.style("pr-agent scaffold rest ... --dry-run", fg="green"))
+    click.echo(f"  {'Full command reference':30s}  "
+               + click.style("pr-agent scaffold --help", fg="green"))
+    click.echo()
+
+    click.echo(click.style("  Docs & tips", fg="bright_blue", bold=True))
+    click.echo()
+    click.echo("  " + click.style("CONNECTING.md", fg="cyan")
+               + "   — connect to your repo (pip install or template fork)")
+    click.echo("  " + click.style("compliance/  ", fg="cyan")
+               + "   — EU AI Act transparency notice and human oversight policy")
+    click.echo("  " + click.style("examples/    ", fg="cyan")
+               + "   — plain Python and Dagster reference implementations")
+    click.echo()
+    click.echo(center(copy_, len("© 2025 Vinita Silaparasetty, Aevoxis Solutions  •  AGPL-3.0")))
+    click.echo()
+
+
+@click.group(invoke_without_command=True)
 @click.version_option(package_name="pr-automation-agent")
-def cli():
+@click.pass_context
+def cli(ctx: click.Context) -> None:
     """pr-automation-agent — scaffold EU AI Act-compliant ingest asset files."""
+    if ctx.invoked_subcommand is None:
+        _welcome()
 
 
 @cli.command()
