@@ -206,19 +206,23 @@ def _safe_id(value: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-# 19 visible chars per line; ╱ moves left by 1 col per row and ╲ moves
-# right by 1 col per row so the A widens uniformly. Centre axis = col 9.
+# 20 visible chars per line.  ╱ shifts left -1/row, ╲ shifts right +1/row
+# from the peak — giving a clean A-frame.  Below the ≈≈≈ crossbar the legs
+# fork outward to four nodes, with a single bottom node at centre.
 _LOGO_LINES = [
-    r"   ○     ○     ○   ",  # col 3,9,15  — three circuit nodes
-    r"   │     │     │   ",  # stems
-    r"○──┘     │     └──○",  # side nodes; ┘/└ anchor at col 3/15
-    r"       ╱   ╲       ",  # ╱@7  ╲@11
-    r"      ╱     ╲      ",  # ╱@6  ╲@12
-    r"≈≈≈≈≈╱       ╲     ",  # ╱@5  ╲@13 — wave enters from left
-    r"    ╱   ≈≈    ╲≈≈≈ ",  # ╱@4  ╲@14 — wave exits to the right
-    r"   ╱           ╲   ",  # ╱@3  ╲@15
-    r"  ╱             ╲  ",  # ╱@2  ╲@16
-    r"  Aevoxis Solutions",  # wordmark
+    r"    ○         ○     ",  # top nodes @4, @14
+    r"    │    ╱╲   │     ",  # stems + triangle peak ╱@9 ╲@10
+    r"    └───╱──╲──┘     ",  # stems join triangle  ╱@8 ╲@11
+    r"       ╱    ╲       ",  # triangle widens       ╱@7 ╲@12
+    r"  ○───╱      ╲───○  ",  # side nodes            ╱@6 ╲@13
+    r"≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈",  # circuit wave crossbar
+    r"   ╱╲        ╱╲     ",  # four legs start
+    r"  ╱  ╲      ╱  ╲    ",  # legs spread
+    r" ╱    ╲    ╱    ╲   ",  # legs widen
+    r"○      ╲  ╱      ○  ",  # outer nodes; inner legs converge
+    r"        ╲╱          ",  # inner legs meet
+    r"         ○          ",  # bottom centre node
+    r" Aevoxis Solutions  ",  # wordmark (20 chars)
 ]
 
 
@@ -250,15 +254,16 @@ def _welcome() -> None:
     click.echo()
     click.echo(border)
     click.echo()
-    _W = 19  # visual width of every logo line
+    _W = 20  # visual width of every logo line
     for i, line in enumerate(_LOGO_LINES):
         if i == len(_LOGO_LINES) - 1:
-            # wordmark — style "Aevoxis" bold, "Solutions" regular
+            # wordmark — style "Aevoxis" bold, "Solutions" regular (visual width = 20)
             styled = (
-                "  "
+                " "
                 + click.style("Aevoxis", fg="bright_blue", bold=True)
                 + " "
                 + click.style("Solutions", fg="blue")
+                + "  "
             )
             click.echo(center(styled, _W))
         else:
