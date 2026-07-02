@@ -1,3 +1,7 @@
+> **Submission note:** This file is the canonical content record. For conference submission (MSR, ICSE), convert to LaTeX using `IEEEtran.cls` (two-column, 10pt, US letter). Target page count: ≤10 pages body + ≤2 pages references. This Markdown faithfully mirrors IEEE structural conventions (Roman-numeral sections, TABLE I / TABLE II caps, `[n]` citation style, Index Terms, XI-section structure with ethics before references) so that conversion is mechanical.
+
+---
+
 # Measuring the Art. 52 Gap: A GitHub-Scale Empirical Study of EU AI Act Transparency Compliance in AI-Assisted Software Development
 
 **Vinita Silaparasetty**
@@ -8,9 +12,9 @@ info@aevoxis.de
 
 ## Abstract
 
-The EU Artificial Intelligence Act (EU 2024/1689, "the Act") imposes transparency obligations on AI-generated content under Article 52, requiring that outputs be labelled as AI-generated to enable human oversight. This paper presents a GitHub-scale empirical study examining whether these obligations are being met in practice across publicly available open-source Python repositories. We address three research questions using three experiments on freely accessible, publicly available data: (RQ1) what fraction of repositories that demonstrably use GitHub Copilot implement any form of Art. 52 labelling; (RQ2) whether Art. 52 labels persist through standard Python code transformation pipelines once written; and (RQ3) whether any Art. 52 compliance signal survives into distributed packages on the Python Package Index (PyPI). Our results across 43,816 Copilot-configured repositories and 18,210 Python files from 25 major PyPI packages show that spontaneous Art. 52 compliance is effectively zero, that provenance is completely absent from the distributed software supply chain, and that while comment-based labels survive standard formatting tools, they are destroyed by compilation and any comment-stripping step. We further develop two regulatory blind spots that the empirical findings expose — the provenance escape problem in the software supply chain and the output-context risk elevation problem in risk classification — and situate Art. 52 within the EU's broader three-instrument AI regulatory package (the Act, the AI Liability Directive, and the revised Product Liability Directive). We close with a comparative analysis of China's technically more prescriptive Deep Synthesis Regulations and derive concrete policy recommendations.
+The EU Artificial Intelligence Act (EU 2024/1689) requires under Article 52 that AI-generated content be labelled to enable human oversight. We present a GitHub-scale empirical study of whether this obligation is being met across publicly available Python repositories. Three experiments on freely accessible public data address: (RQ1) the fraction of repositories actively configured for GitHub Copilot that implement any Art. 52 label; (RQ2) whether such labels persist through standard Python code transformation pipelines; and (RQ3) whether any compliance signal survives into PyPI package distributions. Across 43,816 Copilot-configured repositories and 18,210 Python files from 25 major PyPI packages, spontaneous compliance is near zero and provenance is entirely absent from the distributed supply chain. Comment-based labels survive standard formatters but are destroyed by bytecode compilation. We identify two under-examined regulatory blind spots — provenance escape in the software supply chain and output-context risk elevation in risk classification — situate Art. 52 within the EU's three-instrument AI regulatory package, compare it with China's Deep Synthesis Regulations, and derive four concrete policy amendments.
 
-**Keywords** — EU AI Act, Article 52, AI transparency, empirical compliance, GitHub mining, software supply chain, AI Liability Directive, code provenance, open source.
+**Index Terms** — EU AI Act, Article 52, AI transparency, empirical compliance, GitHub mining, software supply chain, AI Liability Directive, code provenance, open source.
 
 ---
 
@@ -313,6 +317,20 @@ The path from symbolic to substantive compliance requires four specific amendmen
 
 ---
 
+## XI. Ethical and Legal Considerations
+
+**GDPR and data protection.** This study processed no personal data within the meaning of GDPR Art. 4(1). All measurements reported in Tables I–IV are aggregate statistics derived from public repository metadata and public package distributions. No individual user profiles, email addresses, commit author identities, or other personal identifiers were collected, stored, or reported. The per-repository sample (Section IV.A) used individual repository names solely as query keys during data collection; no repository names are reported in the paper. GitHub Code Search API results are aggregate total_count statistics, which are not personal data. EU Regulation 2016/679 does not apply to aggregate, non-identifying statistics derived from publicly available content.
+
+**GitHub API Terms of Service.** All GitHub data was retrieved via the authenticated GitHub REST API v3, targeting exclusively public repositories. Requests were authenticated and rate-limited per GitHub's API documentation. GitHub's Terms of Service (Section H.1) explicitly permits public API use for research purposes subject to rate-limit compliance, which was maintained throughout. No web-interface scraping or bypass of access controls was employed.
+
+**PyPI data.** PyPI package distributions were retrieved via the public PyPI JSON API and public download infrastructure, provided for automated tooling and research use under the PyPI Terms of Use. Downloaded distributions were analysed in memory for pattern matching and immediately discarded; no package source code was retained.
+
+**Copyright.** Pattern-matching analysis of source code for empirical research constitutes analysis, not reproduction, under InfoSoc Directive Art. 5(3)(a) (scientific research exception) and analogous fair use provisions in other jurisdictions. No substantial reproduction of any copyrighted source file occurred.
+
+**Ethical review.** This study involved no human subjects, no personal data, and no interaction with individuals. Consistent with the ethics guidelines of MSR, ICSE, and FSE for studies using exclusively public repository metadata and package distributions, the study is classified as exempt from formal ethics review.
+
+---
+
 ## References
 
 [1] GitHub, "The State of the Octoverse 2023: AI and Developer Productivity," GitHub, Inc., San Francisco, CA, USA, Tech. Rep., Oct. 2023. [Online]. Available: https://octoverse.github.com/
@@ -346,20 +364,6 @@ The path from symbolic to substantive compliance requires four specific amendmen
 [15] European Parliament and of the Council, "Regulation (EU) 2022/2554 on digital operational resilience for the financial sector (DORA)," *Official Journal of the European Union*, L 333, pp. 1–79, Dec. 2022.
 
 ---
-
----
-
-## Ethical and Legal Considerations
-
-**GDPR and data protection.** This study processed no personal data within the meaning of GDPR Art. 4(1). All measurements reported in Tables I–IV are aggregate statistics derived from public repository metadata and public package distributions. No individual user profiles, email addresses, commit author identities, or other personal identifiers were collected, stored, or reported. The per-repository sample (Section IV.A) used individual repository names solely as query keys during data collection; no repository names are reported in the paper. The GitHub Code Search API returns total_count statistics which are not personal data. EU Regulation 2016/679 does not apply to the processing of aggregate, non-identifying statistics derived from publicly available content.
-
-**GitHub API Terms of Service.** All GitHub data was retrieved via the authenticated GitHub REST API v3, using only endpoints documented for public access. All requests were authenticated, rate-limited as specified in GitHub's API documentation, and targeted exclusively public repositories. No circumvention of access controls was performed. GitHub's Terms of Service (Section H.1) explicitly permits use of the public API for research purposes subject to rate-limit compliance; that compliance was maintained throughout. No scraping of web interfaces or bypass of API controls was employed.
-
-**PyPI data.** PyPI package distributions were retrieved via the public PyPI JSON API and the public download infrastructure, which are explicitly provided for automated tooling and research use under the PyPI Terms of Use. Downloaded distributions were analysed in memory for pattern matching and immediately discarded; no package source code was retained.
-
-**Copyright.** Pattern-matching analysis of source code for the purpose of empirical research constitutes quotation and analysis, not reproduction, under the applicable copyright frameworks (InfoSoc Directive Art. 5(3)(a) for scientific research in EU member states; analogous fair use / fair dealing provisions elsewhere). No substantial reproduction of any copyrighted source file occurred.
-
-**Ethical review.** This study was conducted as independent research without institutional affiliation. The data collection involved no human subjects, no personal data, and no interaction with individuals. Standard practice in empirical software engineering research (as reflected in MSR, ICSE, and FSE ethics guidelines) classifies studies using only publicly available repository metadata and package distributions as exempt from formal ethics review. The study was conducted consistent with those guidelines.
 
 ---
 
