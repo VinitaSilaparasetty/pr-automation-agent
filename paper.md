@@ -347,4 +347,20 @@ The path from symbolic to substantive compliance requires four specific amendmen
 
 ---
 
-*Manuscript submitted 2 July 2026. All experimental data (GitHub API query results, header survival logs, PyPI audit results) are available in the repository at https://github.com/VinitaSilaparasetty/pr-automation-agent under `compliance/audit_log/`. All data was collected from publicly available sources; no personal data was processed.*
+---
+
+## Ethical and Legal Considerations
+
+**GDPR and data protection.** This study processed no personal data within the meaning of GDPR Art. 4(1). All measurements reported in Tables I–IV are aggregate statistics derived from public repository metadata and public package distributions. No individual user profiles, email addresses, commit author identities, or other personal identifiers were collected, stored, or reported. The per-repository sample (Section IV.A) used individual repository names solely as query keys during data collection; no repository names are reported in the paper. The GitHub Code Search API returns total_count statistics which are not personal data. EU Regulation 2016/679 does not apply to the processing of aggregate, non-identifying statistics derived from publicly available content.
+
+**GitHub API Terms of Service.** All GitHub data was retrieved via the authenticated GitHub REST API v3, using only endpoints documented for public access. All requests were authenticated, rate-limited as specified in GitHub's API documentation, and targeted exclusively public repositories. No circumvention of access controls was performed. GitHub's Terms of Service (Section H.1) explicitly permits use of the public API for research purposes subject to rate-limit compliance; that compliance was maintained throughout. No scraping of web interfaces or bypass of API controls was employed.
+
+**PyPI data.** PyPI package distributions were retrieved via the public PyPI JSON API and the public download infrastructure, which are explicitly provided for automated tooling and research use under the PyPI Terms of Use. Downloaded distributions were analysed in memory for pattern matching and immediately discarded; no package source code was retained.
+
+**Copyright.** Pattern-matching analysis of source code for the purpose of empirical research constitutes quotation and analysis, not reproduction, under the applicable copyright frameworks (InfoSoc Directive Art. 5(3)(a) for scientific research in EU member states; analogous fair use / fair dealing provisions elsewhere). No substantial reproduction of any copyrighted source file occurred.
+
+**Ethical review.** This study was conducted as independent research without institutional affiliation. The data collection involved no human subjects, no personal data, and no interaction with individuals. Standard practice in empirical software engineering research (as reflected in MSR, ICSE, and FSE ethics guidelines) classifies studies using only publicly available repository metadata and package distributions as exempt from formal ethics review. The study was conducted consistent with those guidelines.
+
+---
+
+*Manuscript submitted 2 July 2026. Aggregate experimental results (GitHub API counts, header survival outcomes, PyPI audit totals) are available at https://github.com/VinitaSilaparasetty/pr-automation-agent. No individual repository names, usernames, or personal identifiers are included in the dataset.*
