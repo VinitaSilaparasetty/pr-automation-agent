@@ -1,0 +1,211 @@
+{
+  "summary": {
+    "total": 20,
+    "tier1": 3,
+    "tier2": 0,
+    "out_of_scope": 17,
+    "in_scope": 3
+  },
+  "repos": [
+    {
+      "repo": "linsalrob/OligoDesigner",
+      "location": "Adelaide, Australia",
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "Skadie26/GitHub-Copilot-Playground",
+      "location": null,
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "Adept-Team-OS/OSRS.github.io",
+      "location": null,
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "Hwa-seop/aicoding_test",
+      "location": null,
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "Younes-Darabi/join",
+      "location": "Bremen - Germany",
+      "tier": "Tier 1",
+      "gdpr": "\u2014",
+      "eu_lang": "\u2014",
+      "eu_cloud": "\u2014",
+      "eu_domain": "\u2014",
+      "signals": 0
+    },
+    {
+      "repo": "gaoshang1990/cmake_demo",
+      "location": "Nanjing City Jiangsu Province",
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "KlausLeon/TestLeaf_PlaywrightAutomationTraining",
+      "location": null,
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "KevinHaseDev/El-Pollo-Loco",
+      "location": null,
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "anasaltomy/naseej-desktop",
+      "location": "Amman-Jordan",
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "gaoshang1990/qt6_demo",
+      "location": "Nanjing City Jiangsu Province",
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "DavidDeBlock/my-sveltekit-boilerplate",
+      "location": null,
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "PuckDynastySim/PuckDynastySim",
+      "location": null,
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "ottaviofogliata/quanto",
+      "location": "Rome / Italy",
+      "tier": "Tier 1",
+      "gdpr": "\u2014",
+      "eu_lang": "\u2014",
+      "eu_cloud": "\u2014",
+      "eu_domain": "\u2014",
+      "signals": 0
+    },
+    {
+      "repo": "KevinHaseDev/Portfolio",
+      "location": null,
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "GeorgewilliamsUg/jojy",
+      "location": null,
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "pulumi/kubespy",
+      "location": "United States of America",
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "comma-csv/comma",
+      "location": null,
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "pass-agent/loomkin",
+      "location": null,
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    },
+    {
+      "repo": "llgcode/draw2d",
+      "location": "Brest (resolved: France)",
+      "tier": "Tier 1",
+      "gdpr": "\u2014",
+      "eu_lang": "\u2014",
+      "eu_cloud": "\u2014",
+      "eu_domain": "\u2014",
+      "signals": 0
+    },
+    {
+      "repo": "hmcts/tcoe-playwright-example",
+      "location": "United Kingdom",
+      "tier": "Out of scope",
+      "gdpr": false,
+      "eu_lang": false,
+      "eu_cloud": false,
+      "eu_domain": false,
+      "signals": 0
+    }
+  ]
+}

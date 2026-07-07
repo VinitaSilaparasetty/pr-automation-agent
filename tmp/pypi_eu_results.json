@@ -1,0 +1,210 @@
+{
+  "summary": {
+    "total_downloads": 248389573,
+    "eu_downloads": 25180264,
+    "eu_share_pct": 10.14,
+    "packages_in_scope": 23
+  },
+  "packages": [
+    {
+      "category": "Scientific computing",
+      "package": "numpy",
+      "total": 28316503,
+      "eu": 3130758,
+      "share": 11.1,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Scientific computing",
+      "package": "pandas",
+      "total": 19026904,
+      "eu": 2157350,
+      "share": 11.3,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Scientific computing",
+      "package": "scipy",
+      "total": 11534534,
+      "eu": 1002384,
+      "share": 8.7,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Scientific computing",
+      "package": "scikit-learn",
+      "total": 5365028,
+      "eu": 616072,
+      "share": 11.5,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Scientific computing",
+      "package": "matplotlib",
+      "total": 5219251,
+      "eu": 541246,
+      "share": 10.4,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Web / API frameworks",
+      "package": "requests",
+      "total": 42409203,
+      "eu": 5209611,
+      "share": 12.3,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Web / API frameworks",
+      "package": "fastapi",
+      "total": 11863637,
+      "eu": 1175315,
+      "share": 9.9,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Web / API frameworks",
+      "package": "flask",
+      "total": 4331001,
+      "eu": 614039,
+      "share": 14.2,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Web / API frameworks",
+      "package": "httpx",
+      "total": 16782938,
+      "eu": 1565389,
+      "share": 9.3,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Web / API frameworks",
+      "package": "aiohttp",
+      "total": 18152907,
+      "eu": 1495422,
+      "share": 8.2,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Developer tooling",
+      "package": "black",
+      "total": 3649051,
+      "eu": 502433,
+      "share": 13.8,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Developer tooling",
+      "package": "ruff",
+      "total": 5500805,
+      "eu": 537496,
+      "share": 9.8,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Developer tooling",
+      "package": "pytest",
+      "total": 26728187,
+      "eu": 2557696,
+      "share": 9.6,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Developer tooling",
+      "package": "mypy",
+      "total": 3154709,
+      "eu": 269414,
+      "share": 8.5,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Developer tooling",
+      "package": "rich",
+      "total": 12464301,
+      "eu": 1148742,
+      "share": 9.2,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Data engineering",
+      "package": "dagster",
+      "total": 104652,
+      "eu": 23894,
+      "share": 22.8,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Data engineering",
+      "package": "prefect",
+      "total": 360293,
+      "eu": 17318,
+      "share": 4.8,
+      "in_scope": "No"
+    },
+    {
+      "category": "Data engineering",
+      "package": "apache-airflow",
+      "total": 587660,
+      "eu": 105538,
+      "share": 18.0,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Data engineering",
+      "package": "dbt-core",
+      "total": 3163006,
+      "eu": 756500,
+      "share": 23.9,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "Data engineering",
+      "package": "great-expectations",
+      "total": 725466,
+      "eu": 201485,
+      "share": 27.8,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "AI / LLM tooling",
+      "package": "langchain",
+      "total": 9667634,
+      "eu": 183052,
+      "share": 1.9,
+      "in_scope": "No"
+    },
+    {
+      "category": "AI / LLM tooling",
+      "package": "openai",
+      "total": 8975426,
+      "eu": 587660,
+      "share": 6.5,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "AI / LLM tooling",
+      "package": "anthropic",
+      "total": 3716156,
+      "eu": 254442,
+      "share": 6.8,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "AI / LLM tooling",
+      "package": "transformers",
+      "total": 3828071,
+      "eu": 317007,
+      "share": 8.3,
+      "in_scope": "Yes"
+    },
+    {
+      "category": "AI / LLM tooling",
+      "package": "datasets",
+      "total": 2762250,
+      "eu": 210001,
+      "share": 7.6,
+      "in_scope": "Yes"
+    }
+  ]
+}
